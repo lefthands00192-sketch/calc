@@ -1,1 +1,1970 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="yellow">
+<head>
+<meta charset="UTF-8">
+<!-- 휴대폰에서 화면 폭에 맞추고, 노치(아이폰) 영역까지 고려 -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d9a300">
+<title>공학용 계산기</title>
+<style>
+/* =========================================================
+   1. 테마 색상 (CSS 변수)
+   - data-theme 값만 바꾸면 전체 색이 바뀜
+   - 기본값: yellow (짙은 노랑)
+   ========================================================= */
+:root, [data-theme="yellow"] {
+  --pin-bg: #fff8dc; --pin-fg: #8a3b00; --pin-line: #a87700;   /* 자주 쓰는 수식 키 */
+  --bg: #d9a300;            /* 바탕 */
+  --bg2: #c48f00;           /* 바탕 그라데이션 아래쪽 */
+  --head-fg: #3a2900;       /* 상단 제목 글자 */
+  --display-bg: #fff8dc;    /* 계산 화면 */
+  --display-fg: #3a2900;
+  --muted: #8a6d22;         /* 흐린 글자 */
+  --num-bg: #fff3c4;  --num-fg: #3a2900;   /* 숫자 키 */
+  --fn-bg: #a87700;   --fn-fg: #fff8e1;    /* 함수 키 */
+  --op-bg: #5a3e00;   --op-fg: #ffd84d;    /* 연산자 키 */
+  --ctl-bg: #7d5a00;  --ctl-fg: #fff3c4;   /* 조작 키 */
+  --eq-bg: #d9480f;   --eq-fg: #ffffff;    /* = 키 */
+  --tab-bg: #b98400;  --tab-fg: #fff3c4; --tab-on-bg: #fff8dc; --tab-on-fg: #3a2900;
+  --panel-bg: #fff8dc; --panel-fg: #3a2900; --line: #e9d9a6;
+  --accent: #d9480f;  --err: #c0262d;
+  --ph: #c9a74a;            /* 빈칸 상자 테두리 */
+  --shadow: 0 2px 0 rgba(0,0,0,.18);
+}
+[data-theme="night"] {
+  --pin-bg: #2c4466; --pin-fg: #ffe08a; --pin-line: #ffd166;   /* 자주 쓰는 수식 키 */
+  --bg: #121a2b; --bg2: #0a0f1a; --head-fg: #e6ebf5;
+  --display-bg: #1c2740; --display-fg: #eef2fa; --muted: #8b98b5;
+  --num-bg: #2a3654; --num-fg: #eef2fa;
+  --fn-bg: #1f4a73; --fn-fg: #d8ecff;
+  --op-bg: #3a4766; --op-fg: #ffd166;
+  --ctl-bg: #33405e; --ctl-fg: #cdd6ea;
+  --eq-bg: #ffb703; --eq-fg: #1b1b1b;
+  --tab-bg: #24304b; --tab-fg: #aab6d0; --tab-on-bg: #ffd166; --tab-on-fg: #1b1b1b;
+  --panel-bg: #1c2740; --panel-fg: #eef2fa; --line: #2f3c5c;
+  --accent: #ffb703; --err: #ff7b7b; --ph: #5d6b8c;
+  --shadow: 0 2px 0 rgba(0,0,0,.35);
+}
+[data-theme="mint"] {
+  --pin-bg: #ffffff; --pin-fg: #0f4d41; --pin-line: #17705f;   /* 자주 쓰는 수식 키 */
+  --bg: #2aa78f; --bg2: #1d8a75; --head-fg: #f2fffb;
+  --display-bg: #effcf8; --display-fg: #0f3d34; --muted: #4f8a7d;
+  --num-bg: #ffffff; --num-fg: #0f3d34;
+  --fn-bg: #17705f; --fn-fg: #e6fff8;
+  --op-bg: #0f4d41; --op-fg: #b8ffe9;
+  --ctl-bg: #1a5e51; --ctl-fg: #e6fff8;
+  --eq-bg: #ff7a59; --eq-fg: #ffffff;
+  --tab-bg: #1f8c77; --tab-fg: #d9fff5; --tab-on-bg: #effcf8; --tab-on-fg: #0f3d34;
+  --panel-bg: #effcf8; --panel-fg: #0f3d34; --line: #c7ebe1;
+  --accent: #ff7a59; --err: #c62828; --ph: #7fbcae;
+  --shadow: 0 2px 0 rgba(0,0,0,.15);
+}
+[data-theme="sakura"] {
+  --pin-bg: #ffffff; --pin-fg: #7a2347; --pin-line: #c2507a;   /* 자주 쓰는 수식 키 */
+  --bg: #f19bb3; --bg2: #e47d9b; --head-fg: #4a1428;
+  --display-bg: #fff4f7; --display-fg: #4a1428; --muted: #a0577a;
+  --num-bg: #ffffff; --num-fg: #4a1428;
+  --fn-bg: #c2507a; --fn-fg: #fff0f5;
+  --op-bg: #7a2347; --op-fg: #ffd3e2;
+  --ctl-bg: #9c3a62; --ctl-fg: #fff0f5;
+  --eq-bg: #6a3fb5; --eq-fg: #ffffff;
+  --tab-bg: #d76890; --tab-fg: #fff0f5; --tab-on-bg: #fff4f7; --tab-on-fg: #4a1428;
+  --panel-bg: #fff4f7; --panel-fg: #4a1428; --line: #f5d0dc;
+  --accent: #6a3fb5; --err: #c0262d; --ph: #e0a0b8;
+  --shadow: 0 2px 0 rgba(0,0,0,.15);
+}
+[data-theme="ocean"] {
+  --pin-bg: #ffffff; --pin-fg: #123a63; --pin-line: #1d4f86;   /* 자주 쓰는 수식 키 */
+  --bg: #2f6fb3; --bg2: #245890; --head-fg: #f0f7ff;
+  --display-bg: #f0f7ff; --display-fg: #12304f; --muted: #557aa3;
+  --num-bg: #ffffff; --num-fg: #12304f;
+  --fn-bg: #1d4f86; --fn-fg: #e3f0ff;
+  --op-bg: #123a63; --op-fg: #9fd3ff;
+  --ctl-bg: #2a5d94; --ctl-fg: #e3f0ff;
+  --eq-bg: #ffb020; --eq-fg: #1b1b1b;
+  --tab-bg: #3a7cc0; --tab-fg: #e3f0ff; --tab-on-bg: #f0f7ff; --tab-on-fg: #12304f;
+  --panel-bg: #f0f7ff; --panel-fg: #12304f; --line: #cfe0f3;
+  --accent: #e08a00; --err: #c0262d; --ph: #8fb2d8;
+  --shadow: 0 2px 0 rgba(0,0,0,.18);
+}
+[data-theme="contrast"] {
+  --pin-bg: #000000; --pin-fg: #ffff00; --pin-line: #ffff00;   /* 자주 쓰는 수식 키 */
+  --bg: #000000; --bg2: #000000; --head-fg: #ffffff;
+  --display-bg: #000000; --display-fg: #ffffff; --muted: #cccccc;
+  --num-bg: #ffffff; --num-fg: #000000;
+  --fn-bg: #000000; --fn-fg: #ffff00;
+  --op-bg: #000000; --op-fg: #00ffff;
+  --ctl-bg: #000000; --ctl-fg: #ffffff;
+  --eq-bg: #ffff00; --eq-fg: #000000;
+  --tab-bg: #000000; --tab-fg: #ffffff; --tab-on-bg: #ffff00; --tab-on-fg: #000000;
+  --panel-bg: #000000; --panel-fg: #ffffff; --line: #666666;
+  --accent: #ffff00; --err: #ff6b6b; --ph: #aaaaaa;
+  --shadow: inset 0 0 0 2px #ffffff;
+}
 
+/* =========================================================
+   2. 기본 설정
+   ========================================================= */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  background: linear-gradient(180deg, var(--bg), var(--bg2));
+  color: var(--display-fg);
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;   /* 휴대폰 터치 시 파란 박스 없애기 */
+}
+button { font-family: inherit; }
+
+/* 전체 틀: 위(제목줄) + 아래(본문) */
+.app {
+  display: flex; flex-direction: column;
+  min-height: 100vh; min-height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* =========================================================
+   3. 상단 제목줄
+   ========================================================= */
+.topbar {
+  flex: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  height: 48px; padding: 0 12px;
+  color: var(--head-fg);
+}
+.topbar h1 { font-size: 18px; margin: 0; font-weight: 800; letter-spacing: -0.3px; white-space: nowrap; }
+.top-actions { display: flex; gap: 6px; }
+.top-btn {
+  height: 34px; padding: 0 12px; border-radius: 17px; border: 0;
+  background: var(--display-bg); color: var(--display-fg);
+  font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  box-shadow: var(--shadow);
+}
+.top-btn .count {
+  display: inline-block; min-width: 20px; padding: 0 5px; margin-left: 4px;
+  border-radius: 10px; background: var(--accent); color: #fff; font-size: 12px; line-height: 20px; text-align: center;
+}
+[data-theme="contrast"] .top-btn { border: 2px solid #fff; }
+
+/* =========================================================
+   4. 본문 배치
+   - 좁은 화면(휴대폰): 계산기만 보이고, 기록은 아래에서 올라오는 창
+   - 넓은 화면(태블릿 가로, 노트북): 계산기 + 기록 나란히
+   ========================================================= */
+.layout {
+  flex: 1;
+  display: flex; justify-content: center; gap: 14px;
+  padding: 0 10px 10px;
+  /* 화면 높이에 맞추되, 너무 낮으면 스크롤 되도록 최소 높이 지정 */
+  height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  min-height: 500px;
+}
+.calc {
+  flex: 1 1 auto; width: 100%; max-width: 520px; min-width: 0;
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+/* =========================================================
+   5. 계산 화면 (교과서 모양 수식 입력칸 + 결과)
+   ========================================================= */
+.display {
+  flex: none;
+  background: var(--display-bg); color: var(--display-fg);
+  border-radius: 16px; padding: 8px 12px 10px;
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+[data-theme="contrast"] .display { border: 2px solid #fff; }
+.disp-top { display: flex; align-items: center; gap: 8px; min-height: 22px; font-size: 12px; color: var(--muted); }
+.badge {
+  flex: none; padding: 1px 7px; border-radius: 6px; font-weight: 800; font-size: 11px;
+  background: var(--accent); color: #fff; letter-spacing: .5px;
+}
+[data-theme="contrast"] .badge, [data-theme="night"] .badge { color: #000; }
+.ans-info { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kbd-btn {
+  flex: none; border: 1px solid var(--line); background: transparent; color: var(--muted);
+  border-radius: 6px; font-size: 12px; padding: 2px 6px; cursor: pointer; display: none;
+}
+.kbd-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+/* 휴대폰 자판으로 입력할 때 글자를 받는 숨은 칸 (화면에는 안 보임) */
+#kbdSink { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; font-size: 16px; border: 0; padding: 0; pointer-events: none; }
+
+/* 수식 입력칸: 분수, 지수, 루트가 교과서 모양 그대로 보이고, 빈칸을 눌러 커서를 옮김 */
+.editor {
+  min-height: 74px; padding: 6px 2px;
+  font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", serif;
+  font-size: 26px; line-height: 1.25;
+  white-space: nowrap; overflow-x: auto; overflow-y: hidden;
+  display: flex; align-items: center;
+  border-bottom: 1px dashed var(--line);
+  outline: none; cursor: text;
+  scrollbar-width: thin;
+  -webkit-user-select: none; user-select: none;
+}
+.editor:focus-visible { border-bottom-color: var(--accent); }
+.editor > .row { padding: 0 6px 0 2px; }
+.editor .hint { font-family: system-ui, sans-serif; font-size: 13px; color: var(--muted); white-space: normal; line-height: 1.4; }
+
+/* 결과 줄 */
+.result {
+  min-height: 40px;
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  font-size: 30px; font-weight: 700;
+  white-space: nowrap; overflow-x: auto; overflow-y: hidden;
+  font-variant-numeric: tabular-nums;
+}
+.result .val { opacity: .45; }               /* 입력 중 미리 보는 결과는 흐리게 */
+.result.final .val { opacity: 1; }           /* = 누른 뒤에는 진하게 */
+.result .err { font-size: 15px; font-weight: 700; color: var(--err); white-space: normal; text-align: right; }
+.result .fracchip {
+  font-family: "Cambria Math", "Times New Roman", serif; font-weight: 400;
+  font-size: 18px; padding: 2px 8px; border-radius: 8px; border: 1px solid var(--line); color: var(--muted);
+}
+
+/* ---------- 수식 모양 (분수, 지수, 루트, 괄호 등) ---------- */
+.row { display: inline-block; }
+.m-op { margin: 0 .18em; }
+.m-comma { margin-right: .2em; }
+.m-e { font-style: italic; }
+.m-ans { font-family: system-ui, sans-serif; font-size: .75em; font-weight: 700; padding: 0 .1em; }
+.m-fn { font-family: system-ui, sans-serif; font-size: .8em; }
+.m-let { font-family: system-ui, sans-serif; font-size: .8em; color: var(--muted); }
+/* 빈칸 상자 □ */
+.m-ph {
+  display: inline-block; min-width: .62em; height: .95em; vertical-align: -.12em;
+  border: 1.5px dashed var(--ph); border-radius: 3px; margin: 0 .06em;
+  text-align: left;
+}
+.m-ph.on { border-style: solid; border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+/* 깜박이는 커서 */
+.cur {
+  display: inline-block; width: 2px; height: 1.05em; margin: 0 -1px; vertical-align: -.18em;
+  background: var(--accent); animation: blink 1s steps(1) infinite;
+}
+.m-ph .cur { vertical-align: top; margin-left: 1px; height: 100%; }
+@keyframes blink { 50% { opacity: 0; } }
+/* 분수 */
+.m-frac {
+  display: inline-flex; flex-direction: column; align-items: center;
+  vertical-align: middle; margin: 0 .12em; font-size: .9em;
+}
+.m-frac > .fn, .m-frac > .fd { align-self: stretch; text-align: center; }   /* 분수 선이 분자·분모 중 넓은 쪽에 맞게 */
+.m-frac > .fn { padding: 0 .2em .06em; border-bottom: 1.5px solid currentColor; }
+.m-frac > .fd { padding: .06em .2em 0; }
+/* 지수(위첨자), 아래첨자 */
+.m-sup { display: inline-block; font-size: .66em; vertical-align: .8em; line-height: 1; }
+.m-sub { display: inline-block; font-size: .66em; vertical-align: -.55em; line-height: 1; }   /* 아래첨자: 기준선 아래로 */
+/* 루트: 글꼴마다 √ 모양이 달라서 그림(SVG)으로 직접 그림 → 모든 기기에서 같은 모양 */
+.m-sqrt { display: inline-block; position: relative; padding-left: .62em; margin: 0 .05em; }
+.m-sqrt.has-idx { padding-left: .85em; }
+.m-sqrt .sign { position: absolute; left: 0; top: 0; bottom: 0; width: .62em; height: 100%; overflow: visible; }
+.m-sqrt.has-idx .sign { left: .23em; }
+.m-sqrt .body { display: inline-block; border-top: 1.5px solid currentColor; padding: .12em .12em 0 .04em; line-height: 1.1; }
+.m-sqrt .idx { position: absolute; left: 0; top: -.05em; font-size: .55em; line-height: 1; }
+/* 괄호: 안에 분수가 있으면 괄호도 같이 커지도록 그림으로 그림 */
+.m-par { display: inline-block; position: relative; padding: 0 .36em; }
+.m-par > .pl, .m-par > .pr { position: absolute; top: 0; height: 100%; width: .32em; overflow: visible; }
+.m-par > .pl { left: .02em; } .m-par > .pr { right: .02em; }
+.m-par > .row { padding: .04em 0; }
+.m-abs { display: inline-block; border-left: 1.5px solid currentColor; border-right: 1.5px solid currentColor; padding: .04em .15em; margin: 0 .1em; }
+.sign path, .pl path, .pr path { fill: none; stroke: currentColor; stroke-width: 1.5px; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.m-ghost { opacity: .35; }
+.m-sci { font-size: .8em; }
+.m-sci .m-sup { font-size: .75em; }
+
+/* =========================================================
+   6. 키패드
+   - 한 개의 격자(5칸)로 모든 버튼을 배치 → 칸이 겹칠 일이 없음
+   - 행 높이는 화면 높이에 맞춰 늘어나고, 최소 높이 보장
+   ========================================================= */
+.keys {
+  flex: 1 1 0; min-height: 0;     /* 남은 높이를 키패드가 나눠 가짐 */
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows:
+    34px                              /* 탭 줄 */
+    repeat(3, minmax(34px, 1fr))      /* 함수 키 3줄 (탭에 따라 바뀜) */
+    minmax(38px, 1.1fr)               /* 자주 쓰는 수식 키 줄 (분수, 제곱 등) */
+    minmax(34px, .85fr)               /* 조작 키 줄 (◀ ▶ DEG ⌫ AC) */
+    repeat(4, minmax(40px, 1.25fr));  /* 숫자 키 4줄 */
+  gap: 6px;
+}
+.tabs { grid-column: 1 / -1; display: flex; gap: 6px; min-width: 0; }
+.tab {
+  flex: 1 1 0; min-width: 0; border: 0; border-radius: 10px;
+  background: var(--tab-bg); color: var(--tab-fg);
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tab.on { background: var(--tab-on-bg); color: var(--tab-on-fg); box-shadow: var(--shadow); }
+[data-theme="contrast"] .tab { border: 2px solid #fff; }
+
+.key {
+  min-width: 0; min-height: 0; width: 100%; height: 100%;
+  border: 0; border-radius: 12px; padding: 0 2px;
+  font-size: 18px; font-weight: 600; line-height: 1;
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+  touch-action: manipulation;          /* 두 번 탭해도 화면 확대 안 되게 */
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; white-space: nowrap;
+  transition: transform .05s, filter .1s;
+}
+.key:active, .key.pressed { transform: translateY(2px); filter: brightness(.88); box-shadow: none; }
+.key:focus-visible, .tab:focus-visible, .top-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.kl { display: inline-block; line-height: 1; white-space: nowrap; }
+/* 버튼 위 첨자: 위첨자(지수)는 밑의 오른쪽 위 모서리에, 아래첨자(밑, n, r)는 기준선 아래로 확실히
+   position 으로 옮겨서 버튼 높이에는 영향 없이 위치만 바뀜 */
+.key sup, .key sub { font-size: .6em; line-height: 0; vertical-align: baseline; position: relative; margin-left: .06em; }
+.key sup { top: -.95em; }        /* 위로: 위첨자 아랫부분이 밑 글자 윗부분과 맞닿는 높이 */
+.key sub { top: .8em; }          /* 아래로: 아래첨자가 밑 글자의 기준선 아래로 내려오게 */
+.key sub:first-child { margin-left: 0; margin-right: .06em; }   /* ₙPᵣ 의 앞쪽 n */
+.key sup:first-child { margin-left: 0; margin-right: -.1em; }   /* ʸ√ 의 차수 */
+.k-num { background: var(--num-bg); color: var(--num-fg); font-size: 22px; }
+.k-fn  { background: var(--fn-bg);  color: var(--fn-fg);  font-size: 16px; }
+.k-op  { background: var(--op-bg);  color: var(--op-fg);  font-size: 24px; }
+.k-ctl { background: var(--ctl-bg); color: var(--ctl-fg); font-size: 16px; }
+.k-eq  { background: var(--eq-bg);  color: var(--eq-fg);  font-size: 26px; font-weight: 800; }
+.k-pin { background: var(--pin-bg); color: var(--pin-fg); font-size: 20px; box-shadow: inset 0 0 0 2px var(--pin-line), var(--shadow); }
+/* 버튼 위 작은 빈칸 그림 (누르면 이런 빈칸이 생긴다는 뜻) */
+.kbox { display: inline-block; width: .62em; height: .72em; border: 1.5px solid currentColor; border-radius: 2px; vertical-align: -.05em; opacity: .9; }
+.key sup .kbox, .key sub .kbox { width: .8em; height: .9em; vertical-align: baseline; }
+.kfrac { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; vertical-align: middle; }
+.kfrac .kbox { width: .62em; height: .5em; }   /* 키가 낮아져도 넘치지 않게 작게 */
+.kfrac .kbox:first-child { border-bottom-width: 1.5px; }
+.kfrac::after { content: ""; order: 1; width: 1.1em; height: 2px; background: currentColor; }
+.kfrac .kbox:last-child { order: 2; }
+.k-small { font-size: 14px !important; }
+.k-tiny  { font-size: 13px !important; }
+[data-theme="contrast"] .k-fn, [data-theme="contrast"] .k-op, [data-theme="contrast"] .k-ctl { box-shadow: inset 0 0 0 2px #fff; }
+
+/* =========================================================
+   7. 계산 기록 창
+   ========================================================= */
+.history {
+  background: var(--panel-bg); color: var(--panel-fg);
+  border-radius: 16px; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; min-height: 0; min-width: 0;
+}
+[data-theme="contrast"] .history { border: 2px solid #fff; }
+.h-head { flex: none; display: flex; align-items: center; gap: 6px; padding: 10px 12px 8px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.h-head h2 { margin: 0; font-size: 16px; flex: 1 1 auto; white-space: nowrap; }
+.h-btn {
+  height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line);
+  background: transparent; color: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.h-btn.danger.armed { background: var(--err); color: #fff; border-color: var(--err); }
+.h-close { display: none; }
+.h-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; list-style: none; margin: 0; padding: 4px 0; -webkit-overflow-scrolling: touch; }
+.h-item {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center;
+  padding: 8px 12px; border-bottom: 1px solid var(--line);
+}
+.h-meta { grid-column: 1 / 2; font-size: 11px; color: var(--muted); }
+.h-expr {
+  grid-column: 1 / 2; min-width: 0; text-align: left; border: 0; background: transparent; color: inherit;
+  padding: 2px 0; cursor: pointer; overflow-x: auto; white-space: nowrap;
+  font-family: "Cambria Math", "Times New Roman", serif; font-size: 17px;
+}
+.h-res {
+  grid-column: 1 / 2; min-width: 0; text-align: right; border: 0; background: transparent; color: var(--accent);
+  padding: 2px 0; cursor: pointer; font-size: 19px; font-weight: 800; overflow-x: auto; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.h-del {
+  grid-column: 2 / 3; grid-row: 1 / 4; align-self: center;
+  width: 30px; height: 30px; border-radius: 15px; border: 1px solid var(--line);
+  background: transparent; color: var(--muted); font-size: 16px; cursor: pointer;
+}
+.h-empty { padding: 24px 16px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+.h-empty code { background: var(--line); color: var(--panel-fg); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+.h-tip { flex: none; padding: 6px 12px 10px; font-size: 11.5px; color: var(--muted); border-top: 1px solid var(--line); line-height: 1.5; }
+
+/* 휴대폰 화면용: 기록은 아래에서 올라오는 창 */
+.backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 20; }
+@media (max-width: 759.98px) {
+  .history {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    height: 82dvh; max-height: 82vh;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    transform: translateY(105%); transition: transform .25s ease;
+    visibility: hidden;
+  }
+  .history.open { transform: translateY(0); visibility: visible; }
+  .backdrop.open { display: block; }
+  .h-close { display: inline-block; }
+  .calc { max-width: 560px; }
+}
+/* 넓은 화면용: 나란히 보기 */
+@media (min-width: 760px) {
+  #btnHistory { display: none; }
+  .history { flex: 0 1 380px; width: 380px; }
+  .layout { padding: 0 16px 16px; }
+}
+/* 노트북 큰 화면: 키 글자 조금 크게 */
+@media (min-width: 1100px) {
+  .history { flex-basis: 440px; width: 440px; }
+}
+
+/* 세로가 짧은 휴대폰(아이폰 SE 등): 화면 영역을 조금 줄임 */
+@media (max-height: 700px) {
+  .topbar { height: 42px; }
+  .layout { height: calc(100dvh - 42px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  .editor { min-height: 60px; font-size: 23px; }
+  .result { min-height: 34px; font-size: 26px; }
+  .keys { gap: 5px; grid-template-rows: 30px repeat(3, minmax(31px, 1fr)) minmax(34px, 1.1fr) minmax(31px, .85fr) repeat(4, minmax(36px, 1.25fr)); }
+  .k-num { font-size: 20px; }
+}
+/* 아주 낮은 화면(세로 600px 이하, 예: 작은 휴대폰): 한 화면에 다 들어오게 더 줄임 */
+@media (max-height: 600px) {
+  .topbar { height: 38px; }
+  .layout { height: calc(100dvh - 38px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); min-height: 480px; padding-bottom: 6px; }
+  .display { padding: 4px 10px 6px; }
+  .disp-top { min-height: 18px; }
+  .editor { min-height: 54px; font-size: 22px; padding: 3px 2px; }
+  /* 버튼이 낮으므로 첨자 위치를 조금만 덜 올리고 내림 (버튼 밖으로 안 나가게) */
+  .key sup { top: -.8em; }
+  .key sub { top: .55em; }
+  .key .kl:has(sub) { transform: translateY(-.15em); }
+  .result { min-height: 30px; font-size: 24px; }
+  .keys { gap: 4px; grid-template-rows: 28px repeat(3, minmax(29px, 1fr)) minmax(32px, 1.1fr) minmax(29px, .85fr) repeat(4, minmax(34px, 1.25fr)); }
+}
+/* 아주 좁은 화면(폭 340px 이하) */
+@media (max-width: 340px) {
+  .k-fn { font-size: 14px; }
+  .k-small { font-size: 12.5px !important; }
+  .k-tiny { font-size: 11.5px !important; }
+  .keys { gap: 5px; }
+  .topbar h1 { font-size: 16px; }
+  .top-btn { padding: 0 9px; font-size: 13px; }
+}
+
+/* =========================================================
+   8. 테마 선택 창, 알림 메시지
+   ========================================================= */
+.theme-menu {
+  position: fixed; top: 52px; right: 10px; z-index: 40;
+  background: var(--panel-bg); color: var(--panel-fg);
+  border-radius: 14px; padding: 10px; width: 230px; max-width: calc(100vw - 20px);
+  box-shadow: 0 8px 30px rgba(0,0,0,.3);
+  display: none;
+}
+.theme-menu.open { display: block; }
+.theme-menu h3 { margin: 2px 4px 8px; font-size: 14px; }
+.theme-opt {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  border: 1px solid transparent; background: transparent; color: inherit;
+  padding: 7px 8px; border-radius: 10px; cursor: pointer; font-size: 14px; text-align: left;
+}
+.theme-opt.on { border-color: var(--accent); font-weight: 800; }
+.swatch { flex: none; width: 34px; height: 22px; border-radius: 6px; display: flex; overflow: hidden; border: 1px solid rgba(0,0,0,.2); }
+.swatch i { flex: 1; }
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+  background: rgba(20,20,20,.9); color: #fff; padding: 10px 16px; border-radius: 20px;
+  font-size: 14px; opacity: 0; pointer-events: none; transition: all .2s; z-index: 50; max-width: 90vw; text-align: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== 상단 제목줄 ===== -->
+  <header class="topbar">
+    <h1>공학용 계산기</h1>
+    <div class="top-actions">
+      <button class="top-btn" id="btnTheme" type="button" aria-haspopup="true">테마</button>
+      <button class="top-btn" id="btnHistory" type="button">기록<span class="count" id="histCount">0</span></button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- ===== 계산기 본체 ===== -->
+    <section class="calc" aria-label="계산기">
+      <div class="display">
+        <div class="disp-top">
+          <span class="badge" id="modeBadge">DEG</span>
+          <span class="ans-info" id="ansInfo">Ans = 0</span>
+          <button class="kbd-btn" id="btnKbd" type="button" title="휴대폰 자판으로 직접 입력">자판 입력</button>
+        </div>
+        <!-- 교과서 모양 수식 입력칸: 빈칸을 눌러 커서를 옮기고, 버튼이나 키보드로 입력 -->
+        <div class="editor" id="editor" tabindex="0" role="textbox" aria-label="수식 입력"></div>
+        <!-- 결과 -->
+        <div class="result" id="result" aria-live="polite"></div>
+        <!-- 휴대폰 자판 입력을 받는 숨은 칸 -->
+        <input id="kbdSink" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-hidden="true" tabindex="-1">
+      </div>
+
+      <!-- 키패드: 버튼은 아래 스크립트가 만들어 넣음 -->
+      <div class="keys" id="keys">
+        <div class="tabs" role="tablist" id="tabs"></div>
+      </div>
+    </section>
+
+    <!-- ===== 계산 기록 ===== -->
+    <aside class="history" id="history" aria-label="계산 기록">
+      <div class="h-head">
+        <h2>계산 기록 (<span id="histCount2">0</span>)</h2>
+        <button class="h-btn" id="btnCopy" type="button">복사</button>
+        <button class="h-btn" id="btnCsv" type="button">CSV 저장</button>
+        <button class="h-btn danger" id="btnClearHist" type="button">전체 삭제</button>
+        <button class="h-btn h-close" id="btnCloseHist" type="button">닫기</button>
+      </div>
+      <ul class="h-list" id="hList"></ul>
+      <div class="h-tip">수식을 누르면 다시 불러와 고칠 수 있고, 결과를 누르면 지금 식에 넣어요. 기록은 새로고침하면 사라져요.</div>
+    </aside>
+  </main>
+
+  <div class="backdrop" id="backdrop"></div>
+  <div class="theme-menu" id="themeMenu" role="menu"><h3>테마 고르기</h3></div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   0. 화면 요소 찾아두기
+   ===================================================================== */
+const $ = (id) => document.getElementById(id);
+const editorEl = $("editor");    // 교과서 모양 수식 입력칸
+const resultEl = $("result");    // 결과 줄
+const keysEl   = $("keys");      // 키패드 격자
+const tabsEl   = $("tabs");      // 탭 줄
+const hListEl  = $("hList");     // 기록 목록
+
+/* 터치 화면(휴대폰, 태블릿)인지 확인 → 터치 화면이면 자판이 안 뜨게 함 */
+const IS_TOUCH = window.matchMedia("(pointer: coarse)").matches;
+
+/* 계산기 상태 */
+const state = {
+  deg: true,            // true: 각도를 도(DEG)로, false: 라디안(RAD)
+  ans: 0,               // 직전 계산 결과 (Ans)
+  justEvaluated: false, // 방금 = 을 눌렀는지
+  tab: "basic",         // 지금 보고 있는 함수 탭
+  nativeKbd: false,     // 휴대폰 자판 사용 여부
+};
+const history = [];     // 계산 기록 (새로고침 전까지 누적)
+let historyNo = 0;      // 기록 번호
+
+/* =====================================================================
+   1. 수식 읽기 (토큰 나누기)
+   - "2sin(30)+√(4)" 같은 글자를 숫자, 기호, 함수 이름 조각으로 나눔
+   ===================================================================== */
+class CalcError extends Error {}   // 학생에게 보여줄 오류 메시지용
+
+// 함수 이름 목록 (소문자로 비교) → 실제 이름
+const FUNC_NAMES = {
+  asinh:"asinh", acosh:"acosh", atanh:"atanh", sinh:"sinh", cosh:"cosh", tanh:"tanh",
+  asin:"asin", acos:"acos", atan:"atan", sin:"sin", cos:"cos", tan:"tan",
+  sqrt:"sqrt", cbrt:"cbrt", root:"root", log:"log", ln:"ln", exp:"exp", abs:"abs",
+  floor:"floor", ceil:"ceil", round:"round", npr:"nPr", ncr:"nCr", mod:"mod",
+  gcd:"gcd", lcm:"lcm", max:"max", min:"min", mean:"mean", rand:"rand",
+};
+// 글자 이름들을 긴 것부터 맞춰보기 위해 정렬 (예: "sinh"를 "sin"+"h"로 잘못 읽지 않도록)
+const WORDS = Object.keys(FUNC_NAMES).concat(["ans", "pi", "e"]).sort((a, b) => b.length - a.length);
+
+function tokenize(src) {
+  const tokens = [];
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (/\s/.test(c)) { i++; continue; }                       // 빈칸은 무시
+
+    // --- 숫자 (예: 12, 3.5, .5, 3.) ---
+    if (/[0-9.]/.test(c)) {
+      const m = src.slice(i).match(/^(\d+\.?\d*|\.\d*)/)[0];
+      if (src[i + m.length] === ".") throw new CalcError("소수점이 두 번 들어갔어요");
+      if (m === ".") throw new CalcError("소수점 앞뒤에 숫자를 넣어 주세요");
+      tokens.push({ type: "num", value: parseFloat(m), text: m });
+      i += m.length; continue;
+    }
+    // --- 위첨자 ², ³ 는 ^2, ^3 으로 바꿔 읽기 ---
+    if (c === "²" || c === "³") {
+      tokens.push({ type: "op", v: "^" });
+      tokens.push({ type: "num", value: c === "²" ? 2 : 3, text: c === "²" ? "2" : "3" });
+      i++; continue;
+    }
+    // --- 기호들 ---
+    if (c === "+") { tokens.push({ type: "op", v: "+" }); i++; continue; }
+    if (c === "-" || c === "−" || c === "–") { tokens.push({ type: "op", v: "-" }); i++; continue; }
+    if (c === "*" || c === "×" || c === "·") { tokens.push({ type: "op", v: "×" }); i++; continue; }
+    if (c === "/" || c === "÷") { tokens.push({ type: "op", v: "÷" }); i++; continue; }
+    if (c === "^") { tokens.push({ type: "op", v: "^" }); i++; continue; }
+    if (c === "!") { tokens.push({ type: "op", v: "!" }); i++; continue; }
+    if (c === "%") { tokens.push({ type: "op", v: "%" }); i++; continue; }
+    if (c === "(" || c === "[") { tokens.push({ type: "(" }); i++; continue; }
+    if (c === ")" || c === "]") { tokens.push({ type: ")" }); i++; continue; }
+    if (c === ",") { tokens.push({ type: "," }); i++; continue; }
+    if (c === "√") { tokens.push({ type: "func", name: "sqrt" }); i++; continue; }
+    if (c === "∛") { tokens.push({ type: "func", name: "cbrt" }); i++; continue; }
+    if (c === "π") { tokens.push({ type: "const", name: "pi" }); i++; continue; }
+    if (c === "□") { tokens.push({ type: "ph" }); i++; continue; }        // 아직 안 채운 빈칸
+
+    // --- 영어 글자: 함수 이름, Ans, pi, e ---
+    if (/[A-Za-z]/.test(c)) {
+      const run = src.slice(i).match(/^[A-Za-z]+/)[0];
+      let j = 0;
+      while (j < run.length) {
+        const rest = run.slice(j).toLowerCase();
+        const w = WORDS.find((word) => rest.startsWith(word));
+        if (!w) throw new CalcError(`알 수 없는 글자 '${run[j]}' 가 있어요`);
+        if (w === "ans") tokens.push({ type: "ans" });
+        else if (w === "pi") tokens.push({ type: "const", name: "pi" });
+        else if (w === "e") tokens.push({ type: "const", name: "e" });
+        else tokens.push({ type: "func", name: FUNC_NAMES[w] });
+        j += w.length;
+      }
+      i += run.length; continue;
+    }
+    throw new CalcError(`사용할 수 없는 기호 '${c}' 가 있어요`);
+  }
+  return tokens;
+}
+
+/* =====================================================================
+   2. 수식 구조 만들기 (파서)
+   - 계산 순서: 괄호 → 함수 → 거듭제곱 → 부호 → 곱셈·나눗셈 → 덧셈·뺄셈
+   - 2π, 3sin(30), 2(3+4) 처럼 곱하기 기호를 생략해도 곱셈으로 처리
+   - 닫는 괄호를 빼먹어도 끝에서 자동으로 닫아줌
+   - lenient(너그러운 모드): 아직 덜 쓴 식도 미리보기용으로 빈칸(□)을 넣어 만들어 줌
+   ===================================================================== */
+class Parser {
+  constructor(tokens, lenient) { this.t = tokens; this.p = 0; this.lenient = lenient; }
+  peek() { return this.t[this.p]; }
+  next() { return this.t[this.p++]; }
+  isOp(v) { const k = this.peek(); return k && k.type === "op" && k.v === v; }
+
+  // 전체 식 읽기
+  parseAll() {
+    if (this.t.length === 0) {
+      if (this.lenient) return { type: "ph" };
+      throw new CalcError("수식을 입력해 주세요");
+    }
+    const node = this.parseAdd();
+    if (this.p < this.t.length) {
+      const k = this.peek();
+      if (k.type === ")") throw new CalcError("여는 괄호 없이 닫는 괄호 ')' 가 있어요");
+      if (k.type === ",") throw new CalcError("쉼표(,)는 함수 괄호 안에서만 써요");
+      throw new CalcError("수식 모양이 올바르지 않아요");
+    }
+    return node;
+  }
+  // 덧셈, 뺄셈
+  parseAdd() {
+    let left = this.parseMul();
+    while (this.isOp("+") || this.isOp("-")) {
+      const op = this.next().v;
+      left = { type: "bin", op, l: left, r: this.parseMul() };
+    }
+    return left;
+  }
+  // 곱셈, 나눗셈, 생략된 곱셈
+  parseMul() {
+    let left = this.parseUnary();
+    for (;;) {
+      if (this.isOp("×") || this.isOp("÷")) {
+        const op = this.next().v;
+        left = { type: "bin", op, l: left, r: this.parseUnary() };
+      } else if (this.startsValue(this.peek())) {
+        // 2π, 3(4+5) 처럼 기호 없이 붙어 있으면 곱셈
+        left = { type: "bin", op: "imp", l: left, r: this.parseUnary() };
+      } else break;
+    }
+    return left;
+  }
+  // 바로 값이 시작되는 조각인지 (생략된 곱셈 판단용)
+  startsValue(k) {
+    return !!k && (k.type === "num" || k.type === "const" || k.type === "ans" || k.type === "func" || k.type === "(" || k.type === "ph");
+  }
+  // 음수 부호 (-2^2 = -4 가 되도록 거듭제곱보다 나중에 계산)
+  parseUnary() {
+    if (this.isOp("-")) { this.next(); return { type: "neg", a: this.parseUnary() }; }
+    if (this.isOp("+")) { this.next(); return this.parseUnary(); }
+    return this.parsePow();
+  }
+  // 거듭제곱 (오른쪽부터 계산: 2^3^2 = 2^9)
+  parsePow() {
+    const base = this.parsePostfix();
+    if (this.isOp("^")) { this.next(); return { type: "pow", b: base, e: this.parseUnary() }; }
+    return base;
+  }
+  // 뒤에 붙는 기호: 계승(!), 퍼센트(%)
+  parsePostfix() {
+    let node = this.parsePrimary();
+    while (this.isOp("!") || this.isOp("%")) {
+      node = { type: this.next().v === "!" ? "fact" : "pct", a: node };
+    }
+    return node;
+  }
+  // 가장 작은 단위: 숫자, 상수, 괄호, 함수
+  parsePrimary() {
+    const k = this.peek();
+    if (!k || k.type === ")" || k.type === "," || (k.type === "op" && !["-", "+"].includes(k.v))) {
+      // 값이 와야 할 자리가 비어 있음
+      if (this.lenient) return { type: "ph" };
+      if (!k) throw new CalcError("수식을 끝까지 입력해 주세요");
+      if (k.type === ")") throw new CalcError("괄호 안이 비어 있어요");
+      if (k.type === ",") throw new CalcError("빈칸이 있어요. 값을 넣어 주세요");
+      throw new CalcError(`'${k.v}' 앞에 값이 필요해요`);
+    }
+    if (k.type === "op") return this.parseUnary();   // 2×-3 같은 경우
+    this.next();
+    if (k.type === "ph") return { type: "ph" };
+    if (k.type === "num") return { type: "num", v: k.value, text: k.text };
+    if (k.type === "const") return { type: "const", name: k.name };
+    if (k.type === "ans") return { type: "ans" };
+    if (k.type === "(") {
+      const inner = this.parseAdd();
+      const closed = this.closeParen();
+      return { type: "group", a: inner, closed };
+    }
+    if (k.type === "func") {
+      // 괄호 없이 쓴 경우: sin30, √4
+      if (!this.peek() || this.peek().type !== "(") {
+        return { type: "func", name: k.name, args: [this.parseUnary()], closed: true, noParen: true };
+      }
+      this.next(); // "(" 건너뛰기
+      const args = [];
+      if (this.peek() && this.peek().type === ")") {
+        this.next();
+        return { type: "func", name: k.name, args, closed: true };
+      }
+      if (!this.peek()) {          // "sin(" 까지만 쓴 상태
+        if (this.lenient) return { type: "func", name: k.name, args: [{ type: "ph" }], closed: false };
+        throw new CalcError("수식을 끝까지 입력해 주세요");
+      }
+      args.push(this.parseAdd());
+      while (this.peek() && this.peek().type === ",") { this.next(); args.push(this.parseAdd()); }
+      const closed = this.closeParen();
+      return { type: "func", name: k.name, args, closed };
+    }
+    throw new CalcError("수식 모양이 올바르지 않아요");
+  }
+  // 닫는 괄호: 끝까지 없으면 자동으로 닫힌 것으로 봄
+  closeParen() {
+    const k = this.peek();
+    if (k && k.type === ")") { this.next(); return true; }
+    if (!k) return false;
+    if (k.type === ",") throw new CalcError("쉼표(,)는 함수 괄호 안에서만 써요");
+    throw new CalcError("괄호가 맞지 않아요");
+  }
+}
+
+/* =====================================================================
+   3. 계산하기
+   ===================================================================== */
+const DEG = Math.PI / 180;
+
+// 계승 n! (정수가 아니면 감마함수로 계산)
+function factorial(n) {
+  if (Number.isInteger(n)) {
+    if (n < 0) throw new CalcError("음의 정수는 계승(!)을 계산할 수 없어요");
+    if (n > 170) throw new CalcError("값이 너무 커서 계산할 수 없어요");
+    let r = 1; for (let i = 2; i <= n; i++) r *= i; return r;
+  }
+  return gamma(n + 1);
+}
+// 감마함수 (Lanczos 근사)
+function gamma(z) {
+  if (z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+  const g = 7, c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+    -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  z -= 1; let x = c[0];
+  for (let i = 1; i < g + 2; i++) x += c[i] / (z + i);
+  const t = z + g + 0.5;
+  return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+}
+// 0 이상 정수인지 검사
+function needInt(x, what) {
+  if (!Number.isInteger(x) || x < 0) throw new CalcError(`${what}에는 0 이상의 정수를 넣어 주세요`);
+}
+function gcd2(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) [a, b] = [b, a % b]; return a; }
+
+// 삼각함수: DEG 모드에서 sin(180)=0 처럼 딱 떨어지는 각은 정확하게
+function trig(name, x, deg) {
+  if (deg) {
+    const r = ((x % 360) + 360) % 360;
+    if (Number.isInteger(r) || Math.abs(r - Math.round(r)) < 1e-12) {
+      const R = Math.round(r) % 360;
+      if (name === "sin") { if (R % 180 === 0) return 0; if (R === 90) return 1; if (R === 270) return -1; if (R === 30 || R === 150) return 0.5; if (R === 210 || R === 330) return -0.5; }
+      if (name === "cos") { if (R === 90 || R === 270) return 0; if (R === 0) return 1; if (R === 180) return -1; if (R === 60 || R === 300) return 0.5; if (R === 120 || R === 240) return -0.5; }
+      if (name === "tan") { if (R % 180 === 0) return 0; if (R % 180 === 90) throw new CalcError("tan 90° 는 정의되지 않아요"); if (R === 45 || R === 225) return 1; if (R === 135 || R === 315) return -1; }
+    }
+    x *= DEG;
+  }
+  let v = Math[name](x);
+  if (Math.abs(v) < 1e-15) v = 0;   // sin(π) = 0.0000000000000001 같은 오차 없애기
+  return v;
+}
+
+// 함수별 (최소, 최대) 인자 개수
+const ARITY = {
+  sin:[1,1], cos:[1,1], tan:[1,1], asin:[1,1], acos:[1,1], atan:[1,1],
+  sinh:[1,1], cosh:[1,1], tanh:[1,1], asinh:[1,1], acosh:[1,1], atanh:[1,1],
+  sqrt:[1,1], cbrt:[1,1], root:[2,2], log:[1,2], ln:[1,1], exp:[1,1], abs:[1,1],
+  floor:[1,1], ceil:[1,1], round:[1,2], nPr:[2,2], nCr:[2,2], mod:[2,2],
+  gcd:[2,99], lcm:[2,99], max:[1,99], min:[1,99], mean:[1,99], rand:[0,0],
+};
+// 사람이 읽기 좋은 함수 이름 (오류 메시지용)
+const NICE = { asin:"sin⁻¹", acos:"cos⁻¹", atan:"tan⁻¹", asinh:"sinh⁻¹", acosh:"cosh⁻¹", atanh:"tanh⁻¹", sqrt:"√", cbrt:"∛", root:"거듭제곱근" };
+
+function evaluate(node, ctx) {
+  switch (node.type) {
+    case "num": return node.v;
+    case "const": return node.name === "pi" ? Math.PI : Math.E;
+    case "ans": return ctx.ans;
+    case "ph": throw new CalcError("빈칸(□)을 채워 주세요");
+    case "group": return evaluate(node.a, ctx);
+    case "neg": return -evaluate(node.a, ctx);
+    case "pct": return evaluate(node.a, ctx) / 100;
+    case "fact": return factorial(evaluate(node.a, ctx));
+    case "pow": {
+      const b = evaluate(node.b, ctx), e = evaluate(node.e, ctx);
+      if (b === 0 && e < 0) throw new CalcError("0으로 나눌 수 없어요");
+      // 음수의 홀수분의 1 거듭제곱: (-8)^(1/3) = -2
+      if (b < 0 && !Number.isInteger(e)) {
+        const inv = 1 / e;
+        if (Math.abs(inv - Math.round(inv)) < 1e-9 && Math.round(inv) % 2 !== 0) return -Math.pow(-b, e);
+        throw new CalcError("음수의 이 거듭제곱은 실수 범위에서 계산할 수 없어요");
+      }
+      return Math.pow(b, e);
+    }
+    case "bin": {
+      const l = evaluate(node.l, ctx), r = evaluate(node.r, ctx);
+      if (node.op === "+") return l + r;
+      if (node.op === "-") return l - r;
+      if (node.op === "×" || node.op === "imp") return l * r;
+      if (node.op === "÷") { if (r === 0) throw new CalcError("0으로 나눌 수 없어요"); return l / r; }
+      break;
+    }
+    case "func": return evalFunc(node, ctx);
+  }
+  throw new CalcError("계산할 수 없는 식이에요");
+}
+
+function evalFunc(node, ctx) {
+  const f = node.name, [lo, hi] = ARITY[f];
+  const nice = NICE[f] || f;
+  if (node.args.length < lo || node.args.length > hi) {
+    if (lo === hi) throw new CalcError(`${nice} 에는 값을 ${lo}개 넣어요` + (lo === 2 ? " (쉼표로 구분)" : ""));
+    throw new CalcError(`${nice} 에 넣은 값의 개수가 맞지 않아요`);
+  }
+  const a = node.args.map((n) => evaluate(n, ctx));
+  const x = a[0];
+  const deg = ctx.deg;
+  const domain = () => { throw new CalcError(`${nice} 에 넣을 수 없는 값이에요 (정의역 확인)`); };
+  switch (f) {
+    case "sin": case "cos": case "tan": return trig(f, x, deg);
+    case "asin": case "acos": if (x < -1 || x > 1) domain(); return deg ? Math[f](x) / DEG : Math[f](x);
+    case "atan": return deg ? Math.atan(x) / DEG : Math.atan(x);
+    case "sinh": case "cosh": case "tanh": case "asinh": return Math[f](x);
+    case "acosh": if (x < 1) domain(); return Math.acosh(x);
+    case "atanh": if (x <= -1 || x >= 1) domain(); return Math.atanh(x);
+    case "sqrt": if (x < 0) throw new CalcError("음수의 제곱근은 실수 범위에서 계산할 수 없어요"); return Math.sqrt(x);
+    case "cbrt": return Math.cbrt(x);
+    case "root": {                                  // root(n, x) = x 의 n제곱근
+      const n = a[0], v = a[1];
+      if (n === 0) throw new CalcError("0제곱근은 계산할 수 없어요");
+      if (v < 0) {
+        if (Number.isInteger(n) && Math.abs(n) % 2 === 1) return -Math.pow(-v, 1 / n);
+        throw new CalcError("음수의 짝수 제곱근은 실수 범위에서 계산할 수 없어요");
+      }
+      return Math.pow(v, 1 / n);
+    }
+    case "log": {
+      if (a.length === 1) { if (x <= 0) throw new CalcError("log 안에는 0보다 큰 수를 넣어요"); return Math.log10(x); }
+      const b = a[0], v = a[1];                   // log(밑, 진수)
+      if (b <= 0 || b === 1) throw new CalcError("로그의 밑은 0보다 크고 1이 아닌 수여야 해요");
+      if (v <= 0) throw new CalcError("로그의 진수는 0보다 커야 해요");
+      return Math.log(v) / Math.log(b);
+    }
+    case "ln": if (x <= 0) throw new CalcError("ln 안에는 0보다 큰 수를 넣어요"); return Math.log(x);
+    case "exp": return Math.exp(x);
+    case "abs": return Math.abs(x);
+    case "floor": return Math.floor(x);
+    case "ceil": return Math.ceil(x);
+    case "round": {
+      const d = a.length > 1 ? a[1] : 0; needInt(d, "반올림 자릿수");
+      const p = Math.pow(10, d); return Math.round((x + Math.sign(x) * 1e-12) * p) / p;
+    }
+    case "nPr": case "nCr": {
+      const n = a[0], r = a[1];
+      needInt(n, f); needInt(r, f);
+      if (r > n) throw new CalcError(`${f} 에서는 r이 n보다 클 수 없어요`);
+      let v = 1;
+      if (f === "nPr") { for (let i = 0; i < r; i++) v *= (n - i); }
+      else { const k = Math.min(r, n - r); for (let i = 1; i <= k; i++) v = v * (n - k + i) / i; v = Math.round(v); }
+      return v;
+    }
+    case "mod": { if (a[1] === 0) throw new CalcError("0으로 나눌 수 없어요"); return ((a[0] % a[1]) + a[1]) % a[1]; }
+    case "gcd": a.forEach((v) => needInt(Math.abs(v), "gcd")); return a.reduce(gcd2);
+    case "lcm": a.forEach((v) => needInt(Math.abs(v), "lcm")); return a.reduce((p, q) => (p === 0 || q === 0) ? 0 : Math.abs(p * q) / gcd2(p, q));
+    case "max": return Math.max(...a);
+    case "min": return Math.min(...a);
+    case "mean": return a.reduce((s, v) => s + v, 0) / a.length;
+    case "rand": return Math.random();
+  }
+  throw new CalcError("알 수 없는 함수예요");
+}
+
+/* 문자열 수식 → 숫자 (오류면 CalcError) */
+function calculate(src) {
+  const tree = new Parser(tokenize(src), false).parseAll();
+  const v = evaluate(tree, { deg: state.deg, ans: state.ans });
+  if (Number.isNaN(v)) throw new CalcError("정의되지 않는 계산이에요");
+  if (!Number.isFinite(v)) throw new CalcError("값이 너무 커서 계산할 수 없어요");
+  return v;
+}
+
+/* =====================================================================
+   4. 결과 숫자 보기 좋게 만들기
+   - 12자리로 반올림해서 0.1+0.2 = 0.30000000000000004 같은 오차 없애기
+   - 아주 크거나 작은 수는 1.23×10^15 처럼 표시
+   ===================================================================== */
+function cleanNumber(x) { return Number(x.toPrecision(12)); }
+
+function formatNumber(x) {
+  const v = cleanNumber(x);
+  if (v === 0) return { html: "0", plain: "0", insert: "0" };
+  const exp = Math.floor(Math.log10(Math.abs(v)));
+  if (exp >= 12 || exp < -6) {
+    // 과학적 표기
+    let m = v / Math.pow(10, exp);
+    let mStr = String(Number(m.toPrecision(10)));
+    let e = exp;
+    if (Math.abs(Number(mStr)) >= 10) { mStr = String(Number((Number(mStr) / 10).toPrecision(10))); e += 1; }
+    return {
+      html: `${mStr.replace("-", "−")}<span class="m-sci">×10<span class="m-sup">${String(e).replace("-", "−")}</span></span>`,
+      plain: `${mStr}×10^${e}`,
+      insert: `(${mStr}×10^(${e}))`,
+    };
+  }
+  let s = String(v);
+  if (/e/.test(s)) s = v.toFixed(12).replace(/\.?0+$/, "");
+  return { html: s.replace("-", "−"), plain: s, insert: v < 0 ? `(${s})` : s };
+}
+
+/* 분수로 바꿀 수 있으면 분수로 (예: 0.75 → 3/4) */
+function toFraction(x) {
+  const v = cleanNumber(x);
+  if (!Number.isFinite(v) || Number.isInteger(v) || Math.abs(v) >= 1e7) return null;
+  let h1 = 1, h0 = 0, k1 = 0, k0 = 1, b = Math.abs(v);
+  for (let i = 0; i < 30; i++) {                // 연분수로 근사
+    const a = Math.floor(b);
+    [h1, h0] = [a * h1 + h0, h1];
+    [k1, k0] = [a * k1 + k0, k1];
+    if (k1 > 1000) return null;
+    if (Math.abs(Math.abs(v) - h1 / k1) < 1e-10 * Math.max(1, Math.abs(v))) {
+      return k1 === 1 ? null : { n: (v < 0 ? -1 : 1) * h1, d: k1 };
+    }
+    b = 1 / (b - a);
+    if (!Number.isFinite(b)) break;
+  }
+  return null;
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
+
+/* =====================================================================
+   5. 교과서 모양 수식 입력기
+   - 수식을 "줄(row)" 과 "상자(node)" 로 저장
+     · 줄: 항목들의 배열 (숫자, 기호, 상자)
+     · 상자: 분수, 지수, 루트, 괄호, 함수 등. 상자 안에는 빈칸(줄)이 1~2개 있음
+       예) 분수 = { t:"frac", num:[...], den:[...] }
+   - 커서는 "어느 줄의 몇 번째 자리" 로 기억
+   - 계산할 때는 줄을 글자 수식 "((1+2)÷(3+4))" 로 바꿔서 위의 계산기에 넘김
+   ===================================================================== */
+
+// 상자 종류별 빈칸 이름 (순서 = 커서가 지나가는 순서)
+const SLOTS = {
+  frac: ["num", "den"],     // 분수: 분자, 분모
+  pow: ["exp"],             // 지수 (앞에 있는 것의 거듭제곱)
+  sqrt: ["body"],           // 제곱근
+  root: ["idx", "body"],    // 거듭제곱근: 차수, 안쪽
+  par: ["body"],            // 괄호
+  func: ["body"],           // 함수 하나짜리: sin( ), log( ) 등
+  func2: ["a", "b"],        // 값 두 개 함수: mod(a, b), gcd(a, b)
+  logb: ["base", "arg"],    // 밑이 있는 로그
+  ncr: ["n", "r"],          // 조합
+  npr: ["n", "r"],          // 순열
+  abs: ["body"],            // 절댓값
+};
+
+// 새 빈 줄 만들기 (parent: 이 줄을 품고 있는 상자 정보)
+function mkRow(parent) { const r = []; r.parent = parent || null; return r; }
+// 글자 하나짜리 항목
+function mkChar(v) { return { t: "c", v }; }
+// 상자 만들기 (빈칸 줄들을 함께 만듦)
+function mkNode(t, props) {
+  const n = Object.assign({ t }, props || {});
+  SLOTS[t].forEach((k) => { n[k] = mkRow({ node: n, key: k }); });
+  return n;
+}
+function isNode(it) { return !!SLOTS[it.t]; }
+function slotRows(n) { return SLOTS[n.t].map((k) => n[k]); }
+// 항목을 줄에 넣을 때, 그 항목이 어느 줄에 있는지 기록 (커서 이동에 필요)
+function placeItems(row, items, at) {
+  row.splice(at, 0, ...items);
+  items.forEach((it) => { it.ownerRow = row; });
+}
+// 줄에 글자들 채우기 (예: 지수 "2")
+function fillChars(row, text) { placeItems(row, [...text].map(mkChar), row.length); }
+
+// 줄 깊은 복사 (기록 저장, 기록 불러오기용)
+function cloneRow(row, parent) {
+  const nr = mkRow(parent);
+  row.forEach((it) => {
+    let c;
+    if (isNode(it)) {
+      c = Object.assign({}, it);
+      SLOTS[it.t].forEach((k) => { c[k] = cloneRow(it[k], { node: c, key: k }); });
+    } else c = { t: "c", v: it.v };
+    c.ownerRow = nr;
+    nr.push(c);
+  });
+  return nr;
+}
+
+/* ----- 입력기 상태 ----- */
+let root = mkRow(null);              // 맨 바깥 줄
+let cur = { row: root, idx: 0 };     // 커서 위치
+
+/* ---------------------------------------------------------------------
+   5-1. 글자 수식으로 바꾸기 (계산용)
+   --------------------------------------------------------------------- */
+const OPERATOR_CHARS = ["+", "-", "×", "÷", ","];
+function serialize(row) {
+  if (row.length === 0) return "□";                  // 빈칸은 □ 로 → "빈칸을 채워 주세요"
+  let s = "";
+  row.forEach((it, i) => {
+    if (!isNode(it)) { s += it.v; return; }
+    const S = (k) => serialize(it[k]);
+    switch (it.t) {
+      case "frac": s += `((${S("num")})÷(${S("den")}))`; break;
+      case "pow": {
+        // 지수 앞에 밑이 없으면 빈칸
+        const prev = row[i - 1];
+        if (!prev || (!isNode(prev) && OPERATOR_CHARS.includes(prev.v))) s += "□";
+        s += `^(${S("exp")})`; break;
+      }
+      case "sqrt": s += `√(${S("body")})`; break;
+      case "root": s += `root(${S("idx")},${S("body")})`; break;
+      case "par": s += `(${S("body")})`; break;
+      case "func": s += `${it.name}(${it.body.length ? serialize(it.body) : (it.name === "rand" ? "" : "□")})`; break;
+      case "func2": s += `${it.name}(${S("a")},${S("b")})`; break;
+      case "logb": s += `log(${S("base")},${S("arg")})`; break;
+      case "ncr": s += `nCr(${S("n")},${S("r")})`; break;
+      case "npr": s += `nPr(${S("n")},${S("r")})`; break;
+      case "abs": s += `abs(${S("body")})`; break;
+    }
+  });
+  return s;
+}
+
+/* ---------------------------------------------------------------------
+   5-2. 화면에 그리기
+   - 편집용: 항목마다 data-rid(줄 번호), data-i(자리) 를 달아서 눌러서 커서를 옮길 수 있게
+   - 기록용(static): 번호와 커서 없이 모양만
+   --------------------------------------------------------------------- */
+let rowRegistry = [];      // data-rid 번호 → 줄
+let staticMode = false;    // true 면 기록용 그리기
+const CURSOR = '<span class="cur"></span>';
+const SVG_SQRT = '<svg class="sign" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0,62 L22,52 L50,98 L100,1"/></svg>';
+const SVG_LP = '<svg class="pl" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M85,2 Q5,50 85,98"/></svg>';
+const SVG_RP = '<svg class="pr" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M15,2 Q95,50 15,98"/></svg>';
+// 함수 이름을 보기 좋게
+const FUNC_LABEL = {
+  asin: "sin<span class='m-sup'>−1</span>", acos: "cos<span class='m-sup'>−1</span>", atan: "tan<span class='m-sup'>−1</span>",
+  asinh: "sinh<span class='m-sup'>−1</span>", acosh: "cosh<span class='m-sup'>−1</span>", atanh: "tanh<span class='m-sup'>−1</span>",
+  mean: "평균", round: "반올림", floor: "내림", ceil: "올림", rand: "난수",
+};
+
+function renderRow(row) {
+  const rid = staticMode ? -1 : rowRegistry.push(row) - 1;
+  const ridAttr = staticMode ? "" : ` data-rid="${rid}"`;
+  const here = !staticMode && cur.row === row;
+  if (row.length === 0) {
+    // 빈칸: 커서가 들어와 있으면 강조
+    return `<span class="row"${ridAttr}><span class="m-ph${here ? " on" : ""}">${here ? CURSOR : ""}</span></span>`;
+  }
+  let html = "";
+  row.forEach((it, i) => {
+    if (here && cur.idx === i) html += CURSOR;
+    html += renderItem(it, rid, i, row);
+  });
+  if (here && cur.idx === row.length) html += CURSOR;
+  return `<span class="row"${ridAttr}>${html}</span>`;
+}
+
+function renderItem(it, rid, i, row) {
+  const a = staticMode ? "" : ` data-rid="${rid}" data-i="${i}"`;
+  const R = (k) => renderRow(it[k]);
+  if (!isNode(it)) {
+    const v = it.v;
+    if (v === "+" || v === "-" || v === "×" || v === "÷") {
+      // 맨 앞이나 다른 기호 바로 뒤의 - 는 음수 부호라서 띄어 쓰지 않음
+      const prev = row[i - 1];
+      const unary = v === "-" && (!prev || (!isNode(prev) && ["+", "-", "×", "÷", ","].includes(prev.v)));
+      const sym = { "+": "+", "-": "−", "×": "×", "÷": "÷" }[v];
+      return unary ? `<span${a}>−</span>` : `<span class="m-op"${a}>${sym}</span>`;
+    }
+    if (v === ",") return `<span class="m-comma"${a}>,</span>`;
+    if (v === "e") return `<span class="m-e"${a}>e</span>`;
+    if (v === "Ans") return `<span class="m-ans"${a}>Ans</span>`;
+    if (/^[A-Za-z]$/.test(v)) return `<span class="m-let"${a}>${v}</span>`;   // 함수 이름을 치는 중인 글자
+    return `<span${a}>${esc(v)}</span>`;
+  }
+  switch (it.t) {
+    case "frac": return `<span class="m-frac"${a}><span class="fn">${R("num")}</span><span class="fd">${R("den")}</span></span>`;
+    case "pow": {
+      const prev = row[i - 1];
+      const noBase = !prev || (!isNode(prev) && ["+", "-", "×", "÷", ","].includes(prev.v));
+      return `${noBase ? '<span class="m-ph"></span>' : ""}<span class="m-sup"${a}>${R("exp")}</span>`;
+    }
+    case "sqrt": return `<span class="m-sqrt"${a}>${SVG_SQRT}<span class="body">${R("body")}</span></span>`;
+    case "root": return `<span class="m-sqrt has-idx"${a}><span class="idx">${R("idx")}</span>${SVG_SQRT}<span class="body">${R("body")}</span></span>`;
+    case "par": {
+      // 분자·분모·지수 안에 괄호 하나만 있으면 괄호를 그리지 않음 (분수 선이 괄호 역할)
+      // 단, 커서가 그 괄호 안에 있을 때는 보여 줘서 지금 괄호 안을 쓰고 있다는 걸 알게 함
+      const pn = row.parent && row.parent.node;
+      if (row.length === 1 && pn && (pn.t === "frac" || pn.t === "pow") && it.body.length && !cursorInside(it)) {
+        return `<span${a}>${R("body")}</span>`;
+      }
+      return `<span class="m-par"${a}>${SVG_LP}${R("body")}${SVG_RP}</span>`;
+    }
+    case "func": {
+      if (it.name === "rand") return `<span class="m-fn"${a}>난수</span>`;
+      if (it.name === "exp") return `<span${a}><span class="m-e">e</span><span class="m-sup">${R("body")}</span></span>`;
+      return `<span${a}><span class="m-fn">${FUNC_LABEL[it.name] || it.name}</span><span class="m-par">${SVG_LP}${R("body")}${SVG_RP}</span></span>`;
+    }
+    case "func2": return `<span${a}><span class="m-fn">${it.name}</span><span class="m-par">${SVG_LP}${R("a")}<span class="m-comma">,</span>${R("b")}${SVG_RP}</span></span>`;
+    case "logb": return `<span${a}><span class="m-fn">log</span><span class="m-sub">${R("base")}</span><span class="m-par">${SVG_LP}${R("arg")}${SVG_RP}</span></span>`;
+    case "ncr": case "npr":
+      return `<span${a}><span class="m-sub">${R("n")}</span>${it.t === "ncr" ? "C" : "P"}<span class="m-sub">${R("r")}</span></span>`;
+    case "abs": return `<span class="m-abs"${a}>${R("body")}</span>`;
+  }
+  return "";
+}
+
+// 커서가 이 상자 안에 있는지
+function cursorInside(n) {
+  if (staticMode) return false;
+  let row = cur.row;
+  while (row.parent) { if (row.parent.node === n) return true; row = row.parent.node.ownerRow; }
+  return false;
+}
+// 기록 목록용: 커서 없이 모양만
+function renderStatic(row) {
+  staticMode = true;
+  try { return renderRow(row); } finally { staticMode = false; }
+}
+
+/* ---------------------------------------------------------------------
+   5-3. 커서 이동
+   --------------------------------------------------------------------- */
+// 상자 밖으로 나가기 (오른쪽): 다음 빈칸이 있으면 그리로, 없으면 상자 뒤로
+function exitRight() {
+  const p = cur.row.parent;
+  if (!p) return false;
+  const n = p.node, rows = slotRows(n), k = rows.indexOf(cur.row);
+  if (k < rows.length - 1) cur = { row: rows[k + 1], idx: 0 };
+  else cur = { row: n.ownerRow, idx: n.ownerRow.indexOf(n) + 1 };
+  return true;
+}
+// 상자 밖으로 나가기 (왼쪽)
+function exitLeft() {
+  const p = cur.row.parent;
+  if (!p) return false;
+  const n = p.node, rows = slotRows(n), k = rows.indexOf(cur.row);
+  if (k > 0) cur = { row: rows[k - 1], idx: rows[k - 1].length };
+  else cur = { row: n.ownerRow, idx: n.ownerRow.indexOf(n) };
+  return true;
+}
+function moveRight() {
+  const it = cur.row[cur.idx];
+  if (!it) return exitRight();
+  if (isNode(it)) cur = { row: slotRows(it)[0], idx: 0 };   // 상자 안으로 들어가기
+  else cur.idx++;
+  return true;
+}
+function moveLeft() {
+  const it = cur.row[cur.idx - 1];
+  if (!it) return exitLeft();
+  if (isNode(it)) { const rows = slotRows(it), last = rows[rows.length - 1]; cur = { row: last, idx: last.length }; }
+  else cur.idx--;
+  return true;
+}
+// 위/아래 (분수의 분자 ↔ 분모)
+function moveVertical(dir) {
+  let row = cur.row;
+  while (row.parent) {
+    const n = row.parent.node, k = row.parent.key;
+    if (n.t === "frac" && ((dir > 0 && k === "num") || (dir < 0 && k === "den"))) {
+      const target = dir > 0 ? n.den : n.num;
+      cur = { row: target, idx: Math.min(cur.row === row ? cur.idx : target.length, target.length) };
+      return true;
+    }
+    row = n.ownerRow;
+  }
+  return false;
+}
+// 지금 커서를 품고 있는 가장 안쪽 상자 밖으로 나가기
+function exitNode() {
+  const p = cur.row.parent;
+  if (!p) return false;
+  const n = p.node;
+  cur = { row: n.ownerRow, idx: n.ownerRow.indexOf(n) + 1 };
+  return true;
+}
+// ")" 키: 커서를 품은 괄호(또는 함수 괄호) 밖으로 나가기. 괄호가 없으면 가장 안쪽 상자 밖으로
+const PAREN_TYPES = ["par", "func", "func2", "logb", "abs", "sqrt", "root"];   // 괄호로 닫히는 상자들
+function exitParen() {
+  let row = cur.row, target = null;
+  while (row.parent) {
+    const n = row.parent.node;
+    if (PAREN_TYPES.includes(n.t) && !n.implicit) { target = n; break; }
+    row = n.ownerRow;
+  }
+  if (!target) return exitNode();
+  const owner = target.ownerRow, at = owner.indexOf(target);
+  cur = { row: owner, idx: at + 1 };
+  return true;
+}
+/* 키보드로 한 줄 수식을 칠 때: 1/2+1/3, 2^3+1, sin30+cos60 처럼
+   분모·지수·괄호 없이 시작한 함수 끝에서 + − × ÷ , 를 치면 자동으로 밖으로 나옴
+   (버튼으로 입력할 때는 빈칸이 눈에 보이므로 이 규칙을 쓰지 않음) */
+function autoExitForTyping() {
+  for (;;) {
+    const p = cur.row.parent;
+    if (!p || cur.idx !== cur.row.length || cur.row.length === 0) return;
+    const n = p.node;
+    const linear = (n.t === "frac" && p.key === "den") || n.t === "pow" || n.implicit;
+    if (!linear) return;
+    if (n.implicit) n.implicit = false;
+    exitNode();
+  }
+}
+
+/* ---------------------------------------------------------------------
+   5-4. 넣기
+   --------------------------------------------------------------------- */
+function insertItems(items) { placeItems(cur.row, items, cur.idx); cur.idx += items.length; }
+function insertChar(v) { insertItems([mkChar(v)]); }
+// 상자를 넣고 커서를 첫 빈칸(또는 지정한 빈칸)으로
+function insertNode(n, enterKey) {
+  placeItems(cur.row, [n], cur.idx);
+  const key = enterKey || SLOTS[n.t][0];
+  cur = { row: n[key], idx: n[key].length };
+}
+
+// 분수 버튼: 커서 앞에 있는 수(또는 상자)를 분자로 가져가고 커서는 분모로
+function isOperandItem(it) {
+  if (!it) return false;
+  if (isNode(it)) return true;
+  return !["+", "-", "×", "÷", ","].includes(it.v);
+}
+function insertFraction() {
+  const row = cur.row;
+  let j = cur.idx;
+  while (j > 0 && isOperandItem(row[j - 1])) j--;
+  const taken = row.splice(j, cur.idx - j);
+  const f = mkNode("frac");
+  placeItems(f.num, taken, 0);
+  placeItems(row, [f], j);
+  cur = taken.length ? { row: f.den, idx: 0 } : { row: f.num, idx: 0 };
+}
+// 지수: exp 를 주면 채우고 커서는 상자 뒤에, 안 주면 지수 빈칸으로
+function insertPower(exp) {
+  const n = mkNode("pow");
+  if (exp) {
+    fillChars(n.exp, exp);
+    placeItems(cur.row, [n], cur.idx);
+    cur.idx++;
+  } else insertNode(n);
+}
+
+// 함수 이름 글자들을 상자로 바꾸는 표 (키보드로 sin, sqrt, pi 등을 칠 때)
+const NAME_TO_NODE = {
+  sin: () => mkNode("func", { name: "sin" }), cos: () => mkNode("func", { name: "cos" }), tan: () => mkNode("func", { name: "tan" }),
+  asin: () => mkNode("func", { name: "asin" }), acos: () => mkNode("func", { name: "acos" }), atan: () => mkNode("func", { name: "atan" }),
+  sinh: () => mkNode("func", { name: "sinh" }), cosh: () => mkNode("func", { name: "cosh" }), tanh: () => mkNode("func", { name: "tanh" }),
+  asinh: () => mkNode("func", { name: "asinh" }), acosh: () => mkNode("func", { name: "acosh" }), atanh: () => mkNode("func", { name: "atanh" }),
+  log: () => mkNode("func", { name: "log" }), ln: () => mkNode("func", { name: "ln" }), exp: () => mkNode("func", { name: "exp" }),
+  floor: () => mkNode("func", { name: "floor" }), ceil: () => mkNode("func", { name: "ceil" }), round: () => mkNode("func", { name: "round" }),
+  max: () => mkNode("func", { name: "max" }), min: () => mkNode("func", { name: "min" }), mean: () => mkNode("func", { name: "mean" }),
+  sqrt: () => mkNode("sqrt"), cbrt: () => { const n = mkNode("root"); fillChars(n.idx, "3"); return n; },
+  abs: () => mkNode("abs"), mod: () => mkNode("func2", { name: "mod" }), gcd: () => mkNode("func2", { name: "gcd" }),
+  lcm: () => mkNode("func2", { name: "lcm" }), ncr: () => mkNode("ncr"), npr: () => mkNode("npr"),
+  pi: () => mkChar("π"), ans: () => mkChar("Ans"), rand: () => mkNode("func", { name: "rand" }),
+};
+const NAME_LIST = Object.keys(NAME_TO_NODE).sort((a, b) => b.length - a.length);
+// 커서 앞에 연달아 있는 영어 글자들
+function trailingLetters() {
+  let s = "", j = cur.idx;
+  while (j > 0) {
+    const it = cur.row[j - 1];
+    if (isNode(it) || !/^[A-Za-z]$/.test(it.v)) break;
+    s = it.v + s; j--;
+  }
+  return s;
+}
+// 커서 앞 글자가 함수 이름으로 끝나면 상자로 바꾸기
+// force=false: 더 긴 이름이 있을 수 있으면(sin → sinh) 기다림
+function convertName(force) {
+  const run = trailingLetters().toLowerCase();
+  if (!run) return false;
+  const name = NAME_LIST.find((nm) => run.endsWith(nm));
+  if (!name) return false;
+  if (!force && NAME_LIST.some((nm) => nm !== name && nm.startsWith(name))) return false;
+  cur.row.splice(cur.idx - name.length, name.length);
+  cur.idx -= name.length;
+  const made = NAME_TO_NODE[name]();
+  if (!isNode(made)) { insertItems([made]); return "char"; }
+  if (made.t === "func" && made.name === "rand") { placeItems(cur.row, [made], cur.idx); cur.idx++; return "char"; }
+  made.implicit = true;          // 괄호를 직접 치지 않고 만든 함수 (sin30 처럼)
+  insertNode(made, made.t === "root" ? "body" : null);
+  return "node";
+}
+
+/* ---------------------------------------------------------------------
+   5-5. 지우기 (⌫)
+   - 글자는 한 글자씩
+   - 상자 바로 뒤에서 누르면: 빈 상자면 통째로 지우고, 내용이 있으면 상자 안으로 들어감
+   - 빈칸 맨 앞에서 누르면: 상자를 풀어서 안의 내용만 남김
+   --------------------------------------------------------------------- */
+function nodeIsEmpty(n) { return slotRows(n).every((r) => r.length === 0) || (n.t === "root" && n.body.length === 0 && n.idx.length <= 1 && (n.idx.length === 0 || n.idx[0].v === "3")); }
+function backspaceCore() {
+  if (cur.idx > 0) {
+    const it = cur.row[cur.idx - 1];
+    if (!isNode(it) || nodeIsEmpty(it) || (it.t === "func" && it.name === "rand")) {
+      cur.row.splice(cur.idx - 1, 1); cur.idx--;
+    } else moveLeft();                                       // 상자 안으로 들어가서 지우게
+    return;
+  }
+  // 빈칸 맨 앞
+  const p = cur.row.parent;
+  if (!p) return;
+  const n = p.node, owner = n.ownerRow, at = owner.indexOf(n);
+  const rows = slotRows(n), k = rows.indexOf(cur.row);
+  if (nodeIsEmpty(n)) { owner.splice(at, 1); cur = { row: owner, idx: at }; return; }
+  if (k > 0 && n.t !== "frac") { cur = { row: rows[k - 1], idx: rows[k - 1].length }; return; }
+  // 상자 풀기: 분수는 분자 ÷ 분모, 루트·로그는 안쪽 내용만, 나머지는 내용을 이어 붙임
+  let keep = rows, sep = null;
+  if (n.t === "frac") sep = "÷";
+  if (n.t === "func2" || n.t === "ncr" || n.t === "npr") sep = ",";
+  if (n.t === "root" || n.t === "logb") keep = [rows[rows.length - 1]];
+  const pieces = []; let offset = 0;
+  keep.forEach((r, i) => {
+    if (i > 0 && sep && r.length && pieces.length) pieces.push(mkChar(sep));
+    if (r === cur.row) offset = pieces.length;
+    pieces.push(...r);
+  });
+  owner.splice(at, 1);
+  placeItems(owner, pieces, at);
+  cur = { row: owner, idx: at + offset };
+}
+
+// 결과 숫자를 입력기 항목으로 (기록에서 결과를 눌렀을 때)
+function numberToItems(v) {
+  const f = formatNumber(v);
+  const m = f.plain.match(/^(-?[\d.]+)×10\^(-?\d+)$/);
+  let items;
+  if (m) {
+    items = [...m[1]].map(mkChar).concat([mkChar("×"), mkChar("1"), mkChar("0")]);
+    const pw = mkNode("pow"); fillChars(pw.exp, m[2]); items.push(pw);
+  } else items = [...f.plain].map(mkChar);
+  if (v < 0) { const p = mkNode("par"); placeItems(p.body, items, 0); return [p]; }
+  return items;
+}
+
+/* =====================================================================
+   6. 화면 갱신
+   ===================================================================== */
+function refresh() {
+  // --- 수식 그리기 ---
+  rowRegistry = [];
+  if (root.length === 0 && cur.row === root) {
+    editorEl.innerHTML = `<span class="row" data-rid="0"><span class="m-ph on">${CURSOR}</span></span>
+      <span class="hint">&nbsp; 아래 버튼으로 입력하세요. 분수, 지수 버튼을 누르면 빈칸이 생겨요</span>`;
+    rowRegistry = [root];
+  } else {
+    editorEl.innerHTML = renderRow(root);
+  }
+  keepCursorVisible();
+  // --- 미리 계산 (= 누르기 전, 흐리게) ---
+  if (!state.justEvaluated) {
+    resultEl.classList.remove("final");
+    if (root.length === 0) { resultEl.innerHTML = ""; return; }
+    try {
+      const src = serialize(root);
+      if (/rand/.test(src)) { resultEl.innerHTML = ""; return; }   // 난수는 미리 계산하지 않음
+      resultEl.innerHTML = resultHTML(calculate(src));
+    } catch (e) {
+      resultEl.innerHTML = "";                                       // 입력 중 오류는 조용히
+    }
+  }
+}
+// 식이 길어서 옆으로 넘치면 커서가 보이게 스크롤
+function keepCursorVisible() {
+  const c = editorEl.querySelector(".cur");
+  if (!c) return;
+  const er = editorEl.getBoundingClientRect(), cr = c.getBoundingClientRect();
+  if (cr.right > er.right - 12) editorEl.scrollLeft += cr.right - er.right + 24;
+  else if (cr.left < er.left + 12) editorEl.scrollLeft -= er.left - cr.left + 24;
+}
+
+// 결과 줄 HTML: (분수 표시) = 값
+function resultHTML(v) {
+  const f = formatNumber(v);
+  const fr = toFraction(v);
+  const chip = fr ? `<span class="fracchip" title="분수로 나타내면">= <span class="m-frac"><span class="fn">${fr.n < 0 ? "−" : ""}${Math.abs(fr.n)}</span><span class="fd">${fr.d}</span></span></span>` : "";
+  return `${chip}<span class="val">= ${f.html}</span>`;
+}
+
+/* =====================================================================
+   7. = 누르기 (계산하고 기록에 저장)
+   ===================================================================== */
+function doEvaluate() {
+  if (root.length === 0) return;
+  const src = serialize(root);
+  try {
+    const v = calculate(src);
+    state.ans = cleanNumber(v);
+    state.justEvaluated = true;
+    resultEl.classList.add("final");
+    resultEl.innerHTML = resultHTML(v);
+    $("ansInfo").innerHTML = `Ans = ${formatNumber(v).html}`;
+    addHistory(src, v);
+  } catch (e) {
+    resultEl.classList.add("final");
+    const msg = e instanceof CalcError ? e.message : "계산할 수 없는 식이에요";
+    resultEl.innerHTML = `<span class="err">${esc(msg)}</span>`;
+  }
+}
+
+/* =====================================================================
+   8. 버튼·키 동작 처리
+   ===================================================================== */
+/* 방금 = 을 누른 뒤 새 입력이 오면:
+   - 연산자(+, ×, 분수, x² 등)로 시작 → 앞에 Ans 를 붙여 이어서 계산
+   - 숫자나 함수로 시작 → 새 식 시작
+   - ◀ ▶ ⌫ → 방금 식을 고쳐 쓰기 */
+function startAfterResult(afterAns) {
+  if (!state.justEvaluated) return;
+  state.justEvaluated = false;
+  root = mkRow(null);
+  cur = { row: root, idx: 0 };
+  if (afterAns) insertChar("Ans");
+}
+
+// 동작 이름 → 실제 동작.  post=true 면 직전 결과에 이어 붙는 동작
+function act(name, post) {
+  const [cmd, arg] = name.split(":");
+  // 화면 조작 동작
+  if (cmd === "eval") { doEvaluate(); return; }
+  if (cmd === "clear") { state.justEvaluated = false; root = mkRow(null); cur = { row: root, idx: 0 }; refresh(); return; }
+  if (cmd === "deg") { toggleDeg(); return; }
+  if (["left", "right", "up", "down", "back", "home", "end"].includes(cmd)) {
+    if (state.justEvaluated) { state.justEvaluated = false; }
+    if (cmd === "left") moveLeft();
+    if (cmd === "right") moveRight();
+    if (cmd === "up") moveVertical(-1);
+    if (cmd === "down") moveVertical(1);
+    if (cmd === "back") backspaceCore();
+    if (cmd === "home") cur = { row: root, idx: 0 };
+    if (cmd === "end") cur = { row: root, idx: root.length };
+    refresh(); return;
+  }
+  // 입력 동작
+  startAfterResult(post);
+  if (cmd !== "ch" || !/^[A-Za-z]$/.test(arg)) {
+    // 함수 이름을 치다가 다른 걸 누르면 함수로 바꿔 줌 (예: sin 다음 3 → sin(3))
+    const made = convertName(true);
+    if (made === "node" && cmd === "par") {                          // sin( 의 ( 는 이미 들어감
+      cur.row.parent.node.implicit = false; refresh(); return;
+    }
+    // log 처럼 바로 바뀐 함수 다음에 ( 를 치면 괄호를 또 만들지 않음
+    if (cmd === "par" && cur.row.parent && cur.row.parent.node.implicit && cur.row.length === 0) {
+      cur.row.parent.node.implicit = false; refresh(); return;
+    }
+  }
+  switch (cmd) {
+    case "ch":
+      // 값이 두 개인 상자(nCr, mod 등)의 첫 빈칸에서 쉼표 → 다음 빈칸으로 이동
+      if (arg === "," && cur.row.parent) {
+        const n = cur.row.parent.node, rows = slotRows(n), k = rows.indexOf(cur.row);
+        if (rows.length > 1 && k < rows.length - 1 && n.t !== "frac") { cur = { row: rows[k + 1], idx: 0 }; break; }
+      }
+      insertChar(arg); if (/^[A-Za-z]$/.test(arg)) convertName(false); break;
+    case "frac": insertFraction(); break;
+    case "pow": insertPower(arg); break;
+    case "sqrt": insertNode(mkNode("sqrt")); break;
+    case "cbrt": { const n = mkNode("root"); fillChars(n.idx, "3"); insertNode(n, "body"); break; }
+    case "root": insertNode(mkNode("root")); break;
+    case "par": insertNode(mkNode("par")); break;
+    case "exit": if (!exitParen()) toast("닫을 괄호가 없어요"); break;
+    case "func": if (arg === "rand") { insertItems([mkNode("func", { name: "rand" })]); } else insertNode(mkNode("func", { name: arg })); break;
+    case "func2": insertNode(mkNode("func2", { name: arg })); break;
+    case "logb": insertNode(mkNode("logb")); break;
+    case "ncr": insertNode(mkNode("ncr")); break;
+    case "npr": insertNode(mkNode("npr")); break;
+    case "abs": insertNode(mkNode("abs")); break;
+    case "tenpow": insertChar("1"); insertChar("0"); insertPower(); break;    // 10ˣ
+    case "epow": insertChar("e"); insertPower(); break;                       // eˣ
+    case "sci": insertChar("×"); insertChar("1"); insertChar("0"); insertPower(); break;  // ×10ⁿ
+  }
+  refresh();
+}
+
+function toggleDeg() {
+  state.deg = !state.deg;
+  $("modeBadge").textContent = state.deg ? "DEG" : "RAD";
+  document.querySelectorAll('[data-act="deg"]').forEach((b) => (b.textContent = state.deg ? "DEG" : "RAD"));
+  toast(state.deg ? "각도 단위: 도(°)" : "각도 단위: 라디안(rad)");
+  if (state.justEvaluated) doEvaluate(); else refresh();   // 바뀐 단위로 다시 계산
+}
+
+/* 키보드 글자 하나 → 동작 (노트북 키보드, 휴대폰 자판, 붙여넣기 공통) */
+function typeChar(ch) {
+  if (/\s/.test(ch)) return;
+  if (/[0-9.]/.test(ch)) return act("ch:" + ch, false);
+  if (/[A-Za-z]/.test(ch)) return act("ch:" + ch, false);
+  const map = {
+    "+": ["ch:+", true], "-": ["ch:-", true], "−": ["ch:-", true], "*": ["ch:×", true], "×": ["ch:×", true],
+    "÷": ["ch:÷", true], "/": ["frac", true], "^": ["pow", true], "(": ["par", false], ")": ["exit", false],
+    "[": ["par", false], "]": ["exit", false], ",": ["ch:,", false], "!": ["ch:!", true], "%": ["ch:%", true],
+    "π": ["ch:π", false], "²": ["pow:2", true], "³": ["pow:3", true], "√": ["sqrt", false], "∛": ["cbrt", false],
+  };
+  if (!map[ch]) return;
+  if ("+-−*×÷,/".includes(ch) && !state.justEvaluated) {   // 1/2/2 = (1/2)÷2 처럼 한 줄 수식 규칙
+    convertName(true);              // sqrt 처럼 치던 이름이 있으면 먼저 함수로
+    autoExitForTyping();
+  }
+  act(map[ch][0], map[ch][1]);
+}
+
+/* =====================================================================
+   9. 키패드 버튼 정의
+   l: 버튼 글자, a: 동작, post: 직전 결과에 이어 붙는 키, c: 색, sz: 글자 크기, t: 설명
+   ===================================================================== */
+const BOX = '<span class="kbox"></span>';            // 버튼 위 작은 빈칸 그림
+const K = (l, a, extra = {}) => Object.assign({ l, a, c: "k-fn" }, extra);
+const FUNC_TABS = {
+  basic: {
+    name: "기본 함수",
+    keys: [
+      K(`${BOX}<sup>3</sup>`, "pow:3", { post: true, t: "세제곱" }), K(`∛${BOX}`, "cbrt", { t: "세제곱근" }),
+      K(`<sup>${BOX}</sup>√${BOX}`, "root", { t: "거듭제곱근", sz: "k-small" }), K(`${BOX}<sup>−1</sup>`, "pow:-1", { post: true, t: "역수" }),
+      K("x!", "ch:!", { post: true, t: "계승" }),
+      K(`10<sup>${BOX}</sup>`, "tenpow", { t: "10의 거듭제곱" }), K(`e<sup>${BOX}</sup>`, "epow", { t: "e의 거듭제곱" }),
+      K("log", "func:log", { t: "상용로그" }), K("ln", "func:ln", { t: "자연로그" }),
+      K(`log<sub>${BOX}</sub>`, "logb", { t: "밑이 있는 로그", sz: "k-small" }),
+      K("π", "ch:π", { t: "원주율" }), K("<i>e</i>", "ch:e", { t: "자연상수" }), K(`|${BOX}|`, "abs", { t: "절댓값" }),
+      K("%", "ch:%", { post: true, t: "퍼센트" }), K(",", "ch:,", { t: "쉼표 (값 구분)" }),
+    ],
+  },
+  trig: {
+    name: "삼각함수",
+    keys: [
+      K("sin", "func:sin"), K("cos", "func:cos"), K("tan", "func:tan"),
+      K("sin<sup>−1</sup>", "func:asin", { sz: "k-small" }), K("cos<sup>−1</sup>", "func:acos", { sz: "k-small" }),
+      K("tan<sup>−1</sup>", "func:atan", { sz: "k-small" }), K("π", "ch:π", { t: "원주율" }),
+      K("DEG", "deg", { c: "k-ctl", sz: "k-small", t: "도/라디안 바꾸기" }),
+      K("sinh", "func:sinh", { sz: "k-small" }), K("cosh", "func:cosh", { sz: "k-small" }),
+      K("tanh", "func:tanh", { sz: "k-small" }), K("sinh<sup>−1</sup>", "func:asinh", { sz: "k-tiny" }),
+      K("cosh<sup>−1</sup>", "func:acosh", { sz: "k-tiny" }), K("tanh<sup>−1</sup>", "func:atanh", { sz: "k-tiny" }),
+      K(",", "ch:,", { t: "쉼표 (값 구분)" }),
+    ],
+  },
+  etc: {
+    name: "확률/기타",
+    keys: [
+      K(`<sub>${BOX}</sub>P<sub>${BOX}</sub>`, "npr", { t: "순열" }), K(`<sub>${BOX}</sub>C<sub>${BOX}</sub>`, "ncr", { t: "조합" }),
+      K("x!", "ch:!", { post: true, t: "계승" }), K("mod", "func2:mod", { sz: "k-small", t: "나머지" }),
+      K("gcd", "func2:gcd", { sz: "k-small", t: "최대공약수" }),
+      K("lcm", "func2:lcm", { sz: "k-small", t: "최소공배수" }), K("내림", "func:floor", { sz: "k-small" }),
+      K("올림", "func:ceil", { sz: "k-small" }), K("반올림", "func:round", { sz: "k-tiny" }), K(`|${BOX}|`, "abs", { t: "절댓값" }),
+      K("평균", "func:mean", { sz: "k-small", t: "평균 (값은 쉼표로 구분)" }), K("max", "func:max", { sz: "k-small", t: "최댓값" }),
+      K("min", "func:min", { sz: "k-small", t: "최솟값" }), K("난수", "func:rand", { sz: "k-small", t: "0~1 사이 난수" }),
+      K(",", "ch:,", { t: "쉼표 (값 구분)" }),
+    ],
+  },
+};
+// 자주 쓰는 수식 키 (탭과 상관없이 항상 보임)
+const PIN_KEYS = [
+  { l: `<span class="kfrac">${BOX}${BOX}</span>`, a: "frac", c: "k-pin", post: true, t: "분수" },
+  { l: `${BOX}<sup>2</sup>`, a: "pow:2", c: "k-pin", post: true, t: "제곱" },
+  { l: `${BOX}<sup>${BOX}</sup>`, a: "pow", c: "k-pin", post: true, t: "거듭제곱" },
+  { l: `√${BOX}`, a: "sqrt", c: "k-pin", t: "제곱근" },
+  { l: `×10<sup>${BOX}</sup>`, a: "sci", c: "k-pin", sz: "k-small", post: true, t: "×10의 거듭제곱 (과학적 표기)" },
+];
+// 조작 키 줄
+const CTRL_KEYS = [
+  { l: "◀", a: "left", c: "k-ctl", t: "커서 왼쪽" },
+  { l: "▶", a: "right", c: "k-ctl", t: "커서 오른쪽 (빈칸에서 빠져나오기)" },
+  { l: "DEG", a: "deg", c: "k-ctl", sz: "k-small", t: "도/라디안 바꾸기" },
+  { l: "⌫", a: "back", c: "k-ctl", t: "지우기 (누르고 있으면 계속 지움)" },
+  { l: "AC", a: "clear", c: "k-ctl", t: "모두 지우기" },
+];
+// 숫자 키
+const N = (l, a, c, extra = {}) => Object.assign({ l, a, c }, extra);
+const NUM_KEYS = [
+  N("7", "ch:7", "k-num"), N("8", "ch:8", "k-num"), N("9", "ch:9", "k-num"), N("(", "par", "k-op", { t: "괄호 열기" }), N(")", "exit", "k-op", { t: "괄호(빈칸) 닫고 나오기" }),
+  N("4", "ch:4", "k-num"), N("5", "ch:5", "k-num"), N("6", "ch:6", "k-num"), N("×", "ch:×", "k-op", { post: true }), N("÷", "ch:÷", "k-op", { post: true }),
+  N("1", "ch:1", "k-num"), N("2", "ch:2", "k-num"), N("3", "ch:3", "k-num"), N("+", "ch:+", "k-op", { post: true }), N("−", "ch:-", "k-op", { post: true }),
+  N("0", "ch:0", "k-num"), N(".", "ch:.", "k-num", { t: "소수점" }), N("π", "ch:π", "k-num", { t: "원주율" }),
+  N("Ans", "ch:Ans", "k-fn", { sz: "k-small", t: "직전 결과" }), N("=", "eval", "k-eq", { t: "계산" }),
+];
+
+// 버튼 하나 만들기
+function makeKey(k, group) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = `key ${k.c} ${k.sz || ""}`;
+  b.dataset.group = group;
+  b.dataset.act = k.a;
+  b.innerHTML = k.a === "deg" ? (state.deg ? "DEG" : "RAD") : `<span class="kl">${k.l}</span>`;
+  b.setAttribute("aria-label", k.t || b.textContent);
+  if (k.t) b.title = k.t;
+  b._key = k;
+  return b;
+}
+// 탭 버튼
+function buildTabs() {
+  Object.entries(FUNC_TABS).forEach(([id, tab]) => {
+    const t = document.createElement("button");
+    t.type = "button"; t.className = "tab"; t.textContent = tab.name; t.dataset.tab = id;
+    t.setAttribute("role", "tab");
+    t.addEventListener("mousedown", (e) => e.preventDefault());       // 입력칸 초점 유지
+    t.addEventListener("click", () => { state.tab = id; renderFuncKeys(); });
+    tabsEl.appendChild(t);
+  });
+}
+// 함수 탭 내용 (탭을 바꾸면 이 15개만 새로 그림)
+function renderFuncKeys() {
+  keysEl.querySelectorAll('[data-group="fn"]').forEach((b) => b.remove());
+  const anchor = keysEl.querySelector('[data-group="pin"]');
+  FUNC_TABS[state.tab].keys.forEach((k) => keysEl.insertBefore(makeKey(k, "fn"), anchor));
+  tabsEl.querySelectorAll(".tab").forEach((t) => {
+    t.classList.toggle("on", t.dataset.tab === state.tab);
+    t.setAttribute("aria-selected", t.dataset.tab === state.tab);
+  });
+}
+function buildKeys() {
+  buildTabs();
+  PIN_KEYS.forEach((k) => keysEl.appendChild(makeKey(k, "pin")));
+  CTRL_KEYS.forEach((k) => keysEl.appendChild(makeKey(k, "ctl")));
+  NUM_KEYS.forEach((k) => keysEl.appendChild(makeKey(k, "num")));
+  renderFuncKeys();
+}
+
+/* 키패드 이벤트 (버튼마다 따로 달지 않고 한 곳에서 처리) */
+let repeatTimer = null, repeatDelay = null;
+function stopRepeat() { clearTimeout(repeatDelay); clearInterval(repeatTimer); repeatDelay = repeatTimer = null; }
+keysEl.addEventListener("mousedown", (e) => { if (e.target.closest(".key")) e.preventDefault(); }); // 입력칸 초점 유지
+keysEl.addEventListener("pointerdown", (e) => {
+  const b = e.target.closest(".key");
+  if (!b || b.dataset.act !== "back") return;
+  // ⌫ 는 누르고 있으면 계속 지우기
+  e.preventDefault();
+  b.classList.add("pressed");
+  act("back");
+  repeatDelay = setTimeout(() => { repeatTimer = setInterval(() => act("back"), 70); }, 450);
+});
+["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
+  keysEl.addEventListener(ev, () => { stopRepeat(); keysEl.querySelectorAll(".pressed").forEach((b) => b.classList.remove("pressed")); }));
+keysEl.addEventListener("click", (e) => {
+  const b = e.target.closest(".key");
+  if (!b) return;
+  if (b.dataset.act === "back" && e.detail !== 0) return;  // ⌫ 는 pointerdown 에서 이미 처리
+  act(b._key.a, !!b._key.post);
+  if (state.nativeKbd) $("kbdSink").focus();
+});
+
+/* =====================================================================
+   10. 입력칸을 눌러서 커서 옮기기 + 키보드 입력
+   ===================================================================== */
+editorEl.addEventListener("pointerdown", (e) => {
+  state.justEvaluated = false;
+  const el = e.target.closest("[data-i],[data-rid]");
+  if (!el || !editorEl.contains(el)) {
+    // 빈 곳을 누르면 맨 끝으로
+    cur = { row: root, idx: root.length };
+  } else if (el.dataset.i !== undefined) {
+    // 글자(또는 상자 테두리)를 누르면 그 글자의 왼쪽/오른쪽 절반에 따라 앞/뒤에 커서
+    const row = rowRegistry[+el.dataset.rid], i = +el.dataset.i;
+    const r = el.getBoundingClientRect();
+    cur = { row, idx: e.clientX < r.left + r.width / 2 ? i : i + 1 };
+  } else {
+    // 빈칸이나 줄의 여백을 누르면: 그 줄에서 가장 가까운 자리
+    const row = rowRegistry[+el.dataset.rid];
+    const items = [...el.children].filter((c) => c.dataset.i !== undefined);
+    let idx = 0;
+    items.forEach((c) => { const r = c.getBoundingClientRect(); if (e.clientX > r.left + r.width / 2) idx = +c.dataset.i + 1; });
+    cur = { row, idx: Math.min(idx, row.length) };
+  }
+  refresh();
+  if (state.nativeKbd) { e.preventDefault(); $("kbdSink").focus(); }
+});
+
+// 키보드 (노트북): 입력칸이 아니라 문서 전체에서 받음 → 어디를 눌렀든 바로 타자 가능
+document.addEventListener("keydown", (e) => {
+  const tag = e.target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") return;              // 숨은 자판 칸은 따로 처리
+  if (e.target.closest && e.target.closest("button") && (e.key === "Enter" || e.key === " ")) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;                 // 복사·붙여넣기 등은 브라우저에 맡김
+  const keyMap = {
+    Enter: "eval", "=": "eval", Escape: "clear", Backspace: "back", ArrowLeft: "left", ArrowRight: "right",
+    ArrowUp: "up", ArrowDown: "down", Home: "home", End: "end",
+  };
+  if (keyMap[e.key]) { e.preventDefault(); act(keyMap[e.key]); return; }
+  if (e.key === "Delete") { e.preventDefault(); if (moveRight()) backspaceCore(); refresh(); return; }
+  if (e.key.length === 1) { e.preventDefault(); typeChar(e.key); }
+});
+// 붙여넣기: 글자를 하나씩 친 것처럼 (/ 는 분수, ^ 는 지수로 바뀜)
+document.addEventListener("paste", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  const text = (e.clipboardData || window.clipboardData).getData("text");
+  if (!text) return;
+  e.preventDefault();
+  [...text].forEach(typeChar);
+});
+// 복사: 지금 식을 글자 수식으로
+document.addEventListener("copy", (e) => {
+  if (e.target.tagName === "INPUT" || String(window.getSelection())) return;
+  if (!root.length) return;
+  e.preventDefault();
+  e.clipboardData.setData("text/plain", serialize(root));
+  toast("수식을 글자로 복사했어요");
+});
+
+/* 휴대폰: 기본은 계산기 버튼만 사용(자판 안 뜸). '자판 입력'을 켜면 숨은 칸으로 글자를 받아 넣음 */
+const sink = $("kbdSink");
+sink.addEventListener("beforeinput", (e) => {
+  e.preventDefault();
+  if (e.inputType && e.inputType.startsWith("delete")) { act("back"); return; }
+  if (e.data) [...e.data].forEach(typeChar);
+});
+sink.addEventListener("input", () => {            // beforeinput 을 못 막는 옛 기기 대비
+  const v = sink.value; sink.value = "";
+  if (v) [...v].forEach(typeChar);
+});
+sink.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); act("eval"); }
+  else if (e.key === "Backspace" && sink.value === "") { e.preventDefault(); act("back"); }
+});
+if (IS_TOUCH) $("btnKbd").style.display = "inline-block";
+$("btnKbd").addEventListener("click", () => {
+  state.nativeKbd = !state.nativeKbd;
+  $("btnKbd").classList.toggle("on", state.nativeKbd);
+  if (state.nativeKbd) sink.focus(); else sink.blur();
+});
+
+/* =====================================================================
+   11. 계산 기록
+   ===================================================================== */
+function addHistory(src, v) {
+  const f = formatNumber(v);
+  const entry = {
+    no: ++historyNo,
+    time: new Date(),
+    expr: src,
+    value: cleanNumber(v),
+    resultText: f.plain,
+    insert: f.insert,
+    html: f.html,
+    mode: state.deg ? "DEG" : "RAD",
+    tree: cloneRow(root, null),       // 교과서 모양 그대로 다시 불러오기 위해 식 구조도 저장
+  };
+  history.push(entry);
+  renderHistory();
+  saveToServer(entry);
+}
+
+/* 나중에 구글 앱스스크립트 웹앱에 넣을 때 기록을 스프레드시트로 보내는 자리.
+   지금(깃허브/오프라인)은 google.script 가 없으므로 아무 일도 하지 않음.
+   앱스스크립트 쪽 예시 (Code.gs):
+     function saveCalcRecord(r) {
+       const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('계산기록')
+              || SpreadsheetApp.getActiveSpreadsheet().insertSheet('계산기록');
+       sh.appendRow([new Date(), r.expr, r.result, r.mode]);
+     }                                                                          */
+function saveToServer(entry) {
+  if (typeof google !== "undefined" && google.script && google.script.run) {
+    google.script.run.withFailureHandler(() => {}).saveCalcRecord({
+      expr: entry.expr, result: entry.resultText, mode: entry.mode,
+    });
+  }
+}
+
+function timeStr(d) { return d.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }); }
+
+function renderHistory() {
+  $("histCount").textContent = history.length;
+  $("histCount2").textContent = history.length;
+  if (history.length === 0) {
+    hListEl.innerHTML = `<li class="h-empty">아직 계산 기록이 없어요.<br>
+      = 을 누르면 여기에 차곡차곡 쌓여요.<br><br>
+      <b>키보드로 입력할 때</b><br>
+      <code>/</code> 분수, <code>^</code> 지수, <code>*</code> 곱하기<br>
+      <code>sqrt</code> 루트, <code>sin</code> 등 함수 이름, <code>pi</code> 원주율<br>
+      <code>→</code> 빈칸 밖으로, <code>↑ ↓</code> 분자/분모 이동<br>
+      <code>Enter</code> 계산, <code>Esc</code> 모두 지우기</li>`;
+    return;
+  }
+  // 최근 기록이 위로 오도록
+  hListEl.innerHTML = history.slice().reverse().map((h) => {
+    const exprHtml = renderStatic(h.tree);   // 입력했던 모양 그대로
+    return `<li class="h-item" data-no="${h.no}">
+      <span class="h-meta">#${h.no} · ${timeStr(h.time)} · ${h.mode}</span>
+      <button class="h-expr" type="button" data-do="load" title="이 식 다시 불러오기">${exprHtml}</button>
+      <button class="h-res" type="button" data-do="use" title="이 결과를 입력에 넣기">= ${h.html}</button>
+      <button class="h-del" type="button" data-do="del" aria-label="이 기록 지우기">×</button>
+    </li>`;
+  }).join("");
+}
+
+hListEl.addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-do]");
+  if (!b) return;
+  const no = Number(b.closest(".h-item").dataset.no);
+  const idx = history.findIndex((h) => h.no === no);
+  if (idx < 0) return;
+  const h = history[idx];
+  if (b.dataset.do === "load") {                    // 식 다시 불러오기
+    state.justEvaluated = false;
+    resultEl.classList.remove("final");
+    root = cloneRow(h.tree, null);
+    cur = { row: root, idx: root.length };
+    refresh();
+    closeHistorySheet();
+  } else if (b.dataset.do === "use") {              // 결과를 지금 식에 넣기
+    startAfterResult(false);
+    insertItems(numberToItems(h.value));
+    refresh();
+    closeHistorySheet();
+    toast("결과를 입력에 넣었어요");
+  } else if (b.dataset.do === "del") {
+    history.splice(idx, 1);
+    renderHistory();
+  }
+});
+
+// 전체 복사
+$("btnCopy").addEventListener("click", () => {
+  if (!history.length) { toast("복사할 기록이 없어요"); return; }
+  const text = history.map((h) => `${h.no}. ${h.expr} = ${h.resultText}`).join("\n");
+  copyText(text).then(() => toast("기록을 복사했어요"), () => toast("복사하지 못했어요"));
+});
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+  // 파일로 직접 열었을 때 등: 예전 방식으로 복사
+  return new Promise((ok, fail) => {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy") ? ok() : fail(); } catch (e) { fail(); }
+    ta.remove();
+  });
+}
+// CSV 파일로 저장 (엑셀에서 한글이 깨지지 않게 BOM 추가)
+$("btnCsv").addEventListener("click", () => {
+  if (!history.length) { toast("저장할 기록이 없어요"); return; }
+  const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
+  const rows = [["번호", "시각", "수식", "결과", "각도"]].concat(
+    history.map((h) => [h.no, timeStr(h.time), h.expr, h.resultText, h.mode]));
+  const csv = "﻿" + rows.map((r) => r.map(q).join(",")).join("\r\n");
+  const d = new Date(), p = (n) => String(n).padStart(2, "0");
+  const name = `계산기록_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.csv`;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+// 전체 삭제: 실수 방지를 위해 두 번 눌러야 지워짐
+let clearArmTimer = null;
+$("btnClearHist").addEventListener("click", (e) => {
+  const b = e.currentTarget;
+  if (!history.length) { toast("지울 기록이 없어요"); return; }
+  if (!b.classList.contains("armed")) {
+    b.classList.add("armed"); b.textContent = "한 번 더 누르면 삭제";
+    clearArmTimer = setTimeout(() => { b.classList.remove("armed"); b.textContent = "전체 삭제"; }, 2500);
+    return;
+  }
+  clearTimeout(clearArmTimer);
+  b.classList.remove("armed"); b.textContent = "전체 삭제";
+  history.length = 0; renderHistory(); toast("기록을 모두 지웠어요");
+});
+
+// 휴대폰: 기록 창 열고 닫기
+function openHistorySheet() { $("history").classList.add("open"); $("backdrop").classList.add("open"); }
+function closeHistorySheet() { $("history").classList.remove("open"); $("backdrop").classList.remove("open"); }
+$("btnHistory").addEventListener("click", openHistorySheet);
+$("btnCloseHist").addEventListener("click", closeHistorySheet);
+$("backdrop").addEventListener("click", () => { closeHistorySheet(); closeThemeMenu(); });
+
+/* =====================================================================
+   12. 테마
+   ===================================================================== */
+const THEMES = [
+  { id: "yellow", name: "짙은 노랑 (기본)", sw: ["#d9a300", "#fff3c4", "#5a3e00", "#d9480f"] },
+  { id: "night", name: "밤하늘", sw: ["#121a2b", "#2a3654", "#1f4a73", "#ffb703"] },
+  { id: "mint", name: "민트", sw: ["#2aa78f", "#ffffff", "#0f4d41", "#ff7a59"] },
+  { id: "sakura", name: "벚꽃", sw: ["#f19bb3", "#ffffff", "#7a2347", "#6a3fb5"] },
+  { id: "ocean", name: "바다", sw: ["#2f6fb3", "#ffffff", "#123a63", "#ffb020"] },
+  { id: "contrast", name: "고대비 (잘 보이게)", sw: ["#000000", "#ffffff", "#ffff00", "#00ffff"] },
+];
+function applyTheme(id) {
+  if (!THEMES.some((t) => t.id === id)) id = "yellow";
+  document.documentElement.dataset.theme = id;
+  const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+  document.querySelector('meta[name="theme-color"]').setAttribute("content", bg);
+  document.querySelectorAll(".theme-opt").forEach((o) => o.classList.toggle("on", o.dataset.id === id));
+  try { localStorage.setItem("sci-calc-theme", id); } catch (e) { /* 저장 못 해도 괜찮음 */ }
+}
+function buildThemeMenu() {
+  const menu = $("themeMenu");
+  THEMES.forEach((t) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "theme-opt"; b.dataset.id = t.id;
+    b.innerHTML = `<span class="swatch">${t.sw.map((c) => `<i style="background:${c}"></i>`).join("")}</span>${t.name}`;
+    b.addEventListener("click", () => { applyTheme(t.id); closeThemeMenu(); });
+    menu.appendChild(b);
+  });
+}
+function closeThemeMenu() { $("themeMenu").classList.remove("open"); }
+$("btnTheme").addEventListener("click", (e) => { e.stopPropagation(); $("themeMenu").classList.toggle("open"); });
+document.addEventListener("click", (e) => { if (!e.target.closest("#themeMenu") && !e.target.closest("#btnTheme")) closeThemeMenu(); });
+
+/* =====================================================================
+   13. 알림 메시지
+   ===================================================================== */
+let toastTimer = null;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 1600);
+}
+
+/* =====================================================================
+   14. 시작
+   ===================================================================== */
+buildKeys();
+buildThemeMenu();
+let savedTheme = "yellow";
+try { savedTheme = localStorage.getItem("sci-calc-theme") || "yellow"; } catch (e) {}
+applyTheme(savedTheme);
+renderHistory();
+refresh();
+if (!IS_TOUCH) editorEl.focus({ preventScroll: true });
+
+// 시험용으로 바깥에서 쓸 수 있게 (검증 스크립트용, 화면에는 영향 없음)
+window.__calc = { calculate, formatNumber, toFraction, state, serialize: () => serialize(root) };
+</script>
+</body>
+</html>
