@@ -177,6 +177,7 @@ button { font-family: inherit; }
 }
 [data-theme="contrast"] .display { border: 2px solid #fff; }
 .disp-top { display: flex; align-items: center; gap: 8px; min-height: 22px; font-size: 12px; color: var(--muted); }
+button.badge { border: 0; cursor: pointer; font-family: inherit; line-height: 1.5; }
 .badge {
   flex: none; padding: 1px 7px; border-radius: 6px; font-weight: 800; font-size: 11px;
   background: var(--accent); color: #fff; letter-spacing: .5px;
@@ -468,14 +469,239 @@ button { font-family: inherit; }
   font-size: 14px; opacity: 0; pointer-events: none; transition: all .2s; z-index: 50; max-width: 90vw; text-align: center;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* =========================================================
+   9. 계산기 / 그래프 전환
+   ========================================================= */
+.topbar .left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mode-seg { flex: none; display: flex; gap: 2px; padding: 3px; border-radius: 18px; background: rgba(0,0,0,.16); }
+.mode-seg button {
+  height: 30px; padding: 0 13px; border: 0; border-radius: 15px; background: transparent;
+  color: var(--head-fg); font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.mode-seg button.on { background: var(--display-bg); color: var(--display-fg); box-shadow: var(--shadow); }
+[data-theme="contrast"] .mode-seg { background: #000; border: 2px solid #fff; }
+@media (max-width: 479.98px) { .topbar h1 { display: none; } }   /* 휴대폰에서는 제목 대신 전환 버튼 */
+
+/* 모드마다 보이는 부분 */
+.app[data-mode="graph"] .display,
+.app[data-mode="graph"] .history,
+.app[data-mode="graph"] #btnHistory,
+.app[data-mode="graph"] .backdrop { display: none !important; }
+.app[data-mode="calc"] .fpanel,
+.app[data-mode="calc"] .graph { display: none !important; }
+
+/* =========================================================
+   10. 그래프: 함수 목록 (y = …)
+   ========================================================= */
+.fpanel {
+  flex: none; min-height: 0; min-width: 0;
+  background: var(--display-bg); color: var(--display-fg);
+  border-radius: 16px; box-shadow: var(--shadow);
+  display: flex; flex-direction: column;
+}
+.f-head { flex: none; display: flex; align-items: center; gap: 6px; padding: 7px 10px 4px; }
+.f-head b { flex: 1 1 auto; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.f-btn {
+  flex: none; height: 28px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line);
+  background: transparent; color: var(--display-fg); font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.f-btn:disabled { opacity: .4; cursor: default; }
+.f-btn .short { display: none; }
+/* 문자(계수·상수) 값 입력 칸 */
+.p-panel { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.p-panel[hidden] { display: none !important; }
+.p-panel.c { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding-top: 6px; border-top: 1px dashed var(--line); }
+.p-title { font-size: 12px; color: var(--muted); font-weight: 700; }
+.p-chip { display: flex; align-items: center; gap: 4px; }
+.p-chip .p-val { width: 76px; }
+.p-panel.g { flex: none; padding: 4px 10px 6px; border-top: 1px dashed var(--line); max-height: 150px; overflow-y: auto; }
+.p-row { display: grid; grid-template-columns: auto 66px minmax(0, 1fr) 34px; align-items: center; gap: 8px; min-height: 32px; }
+.p-name { font-family: "Cambria Math", "Times New Roman", serif; font-size: 18px; white-space: nowrap; }
+.p-name i { font-style: italic; }
+.p-val {
+  width: 100%; min-width: 0; height: 30px; padding: 0 6px; border-radius: 7px;
+  border: 1px solid var(--line); background: var(--panel-bg); color: var(--panel-fg);
+  font-size: 16px; font-family: inherit;      /* 16px 이상: 아이폰에서 확대되지 않게 */
+}
+.p-val.bad { border-color: var(--err); box-shadow: 0 0 0 1px var(--err); }
+.p-sl { width: 100%; min-width: 0; accent-color: var(--accent); }
+.p-play { width: 34px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--display-fg); font-size: 12px; cursor: pointer; }
+.p-play.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+/* 그래프 왼쪽 위 범례 (휴대폰) */
+.g-legend {
+  position: absolute; left: 8px; top: 48px; display: none; flex-direction: column; align-items: flex-start; gap: 3px;
+  max-width: 62%; max-height: 48%; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin;   /* 많으면 범례 안에서 스크롤 */
+}
+.g-legend[hidden] { display: none !important; }
+.g-leg {
+  flex: none;   /* 범례 칸이 좁아도 이름표가 눌려 찌그러지지 않게 */
+  display: flex; align-items: center; gap: 6px; max-width: 100%; min-height: 26px; padding: 1px 8px 1px 6px;
+  border-radius: 8px; border: 1px solid var(--line); cursor: pointer; text-align: left;
+  background: color-mix(in srgb, var(--display-bg) 90%, transparent); color: var(--display-fg);
+  font-family: "Cambria Math", "Times New Roman", serif; font-size: 15px; white-space: nowrap; overflow: hidden;
+}
+.g-leg.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.g-leg.off { opacity: .45; }
+.g-leg > i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.g-leg .tx { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.g-leg em { font-style: italic; }
+.g-slope { display: inline-block; padding-left: 16px; }
+.f-list { flex: 1 1 auto; min-height: 0; max-height: 156px; overflow-y: auto; padding: 0 6px 6px; }
+.f-row {
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; column-gap: 6px;
+  padding: 1px 6px; margin-top: 3px; border: 2px solid transparent; border-radius: 10px; cursor: pointer;
+}
+.f-row.on { border-color: var(--accent); }
+.f-dot {   /* 색 점: 누르면 그래프 보이기/숨기기 */
+  width: 22px; height: 22px; padding: 0; border-radius: 50%;
+  border: 3px solid var(--c); background: var(--c); cursor: pointer;
+}
+.f-dot.off { background: transparent; }
+.f-y { font-family: "Cambria Math", "Times New Roman", serif; font-size: 20px; white-space: nowrap; opacity: .55; }
+.f-y i { font-style: italic; }
+.f-expr {
+  min-width: 0; min-height: 42px; overflow-x: auto; overflow-y: hidden; white-space: nowrap;
+  display: flex; align-items: center;
+  font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif; font-size: 21px;
+}
+.f-row.on .f-expr { overflow: hidden; }
+.f-row .editor { flex: 1 1 auto; width: 100%; min-height: 42px; font-size: 22px; padding: 2px 0; border-bottom: 0; }
+.f-row .editor .hint { white-space: nowrap; }
+.f-empty { font-family: system-ui, sans-serif; font-size: 13px; color: var(--muted); }
+.f-del {
+  width: 28px; height: 28px; border-radius: 14px; border: 1px solid var(--line);
+  background: transparent; color: var(--muted); font-size: 15px; cursor: pointer;
+}
+.f-err { grid-column: 3 / 5; font-family: system-ui, sans-serif; font-size: 12px; color: var(--muted); line-height: 1.3; padding-bottom: 3px; }
+.f-err:empty { display: none; }
+.m-var { font-style: italic; }       /* 변수 x, y */
+.m-rel { margin: 0 .3em; }           /* 등호, 부등호 */
+/* 미분: d/dx (식) |x=값 */
+.m-ddx { font-style: italic; font-size: .72em; margin-right: .04em; }
+.m-at { display: inline-block; border-left: 1.5px solid currentColor; margin-left: .06em; padding: .9em 0 0 .1em; vertical-align: -.45em; line-height: 1; }
+.m-at > .m-sub { vertical-align: baseline; }
+/* 정적분: ∫ (아래끝 위끝) 식 dx */
+.m-int { display: inline-flex; align-items: center; vertical-align: middle; margin: 0 .05em; }
+.m-intsign { font-size: 1.6em; line-height: 1; font-style: normal; }
+.m-lim { display: inline-flex; flex-direction: column; justify-content: space-between; align-self: stretch;
+         font-size: .62em; line-height: 1; margin: 0 .22em 0 .02em; min-height: 2.4em; }
+.m-dx { margin-left: .2em; font-style: italic; }
+.m-nabla { font-style: normal; margin-right: .02em; }
+.m-ph.ghost { opacity: .5; }        /* 그래디언트에서 아직 안 넣은 좌표 자리 */
+/* 버튼 위 d/dx, ∫ 의 위·아래 빈칸 */
+.kdfrac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; font-size: .68em; line-height: 1.05; font-style: italic; margin-right: .05em; }
+.kdfrac > span:first-child { border-bottom: 1.5px solid currentColor; padding: 0 .2em; }
+.klim { display: inline-flex; flex-direction: column; justify-content: space-between; vertical-align: middle; gap: .5em; margin-left: .04em; font-size: .7em; }
+.kx { font-family: "Times New Roman", serif; font-style: italic; font-size: 1.3em; font-weight: 700; }
+
+/* =========================================================
+   11. 그래프: 그리는 영역
+   ========================================================= */
+.graph {
+  position: relative; min-width: 0; min-height: 0; overflow: hidden;
+  background: var(--panel-bg); color: var(--panel-fg);
+  border-radius: 16px; box-shadow: var(--shadow);
+}
+[data-theme="contrast"] .graph, [data-theme="contrast"] .fpanel { border: 2px solid #fff; }
+#gCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+.g-tools { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100% - 16px); }
+.g-btn {
+  min-width: 36px; height: 34px; padding: 0 8px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--display-bg); color: var(--display-fg);
+  font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: var(--shadow); white-space: nowrap;
+}
+.g-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+[data-theme="contrast"] .g-btn.on, [data-theme="night"] .g-btn.on { color: #000; }
+.g-info {   /* 추적한 점의 좌표 */
+  position: absolute; left: 8px; bottom: 8px; max-width: calc(100% - 16px);
+  padding: 5px 9px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--display-bg); color: var(--display-fg);
+  font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: none; pointer-events: none;
+}
+.g-info.show { display: block; }
+.g-info i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+
+/* ---------- 그래프 모드 배치 ----------
+   좁은 화면(휴대폰, 태블릿 세로): 위 그래프 / 가운데 식 목록 / 아래 키패드
+   넓은 화면(노트북, 태블릿 가로): 왼쪽 식 목록+키패드 / 오른쪽 큰 그래프 */
+@media (max-width: 899.98px) {
+  .app[data-mode="graph"] .layout {
+    flex-direction: column; align-items: center; gap: 8px;
+    height: auto; min-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  .app[data-mode="graph"] .graph { order: -1; flex: 1 1 auto; width: 100%; min-height: 200px; }
+  .app[data-mode="graph"] .calc { flex: none; gap: 6px; }
+  /* 식 목록: 입력 중인 식 한 줄만 (다른 식은 그래프 왼쪽 위 범례로) + 오른쪽에 작은 버튼 두 개 */
+  .app[data-mode="graph"] .fpanel { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .app[data-mode="graph"] .p-panel.g { order: 3; flex: 0 0 100%; max-height: 76px; }   /* 문자 값: 2줄까지 보이고 나머지는 스크롤 */
+  .app[data-mode="graph"] .f-list { order: 1; flex: 1 1 0; min-width: 0; max-height: none; overflow: visible; padding: 4px 0 4px 6px; }
+  .app[data-mode="graph"] .f-err { white-space: normal; }      /* 안내 문구는 줄을 바꿔서 (버튼을 밀어내지 않게) */
+  .app[data-mode="graph"] .f-row { margin-top: 0; }
+  .app[data-mode="graph"] .f-row:not(.on) { display: none; }
+  .app[data-mode="graph"] .f-head { order: 2; flex-direction: column; align-items: stretch; gap: 4px; padding: 4px 6px 4px 2px; }
+  .app[data-mode="graph"] .f-head b { display: none; }
+  .app[data-mode="graph"] .f-btn { height: 26px; padding: 0 8px; font-size: 12.5px; }
+  .app[data-mode="graph"] .f-btn .long { display: none; }
+  .app[data-mode="graph"] .f-btn .short { display: inline; }
+  .app[data-mode="graph"] .g-legend { display: flex; }
+  /* 키패드: 촘촘하게 */
+  .app[data-mode="graph"] .keys { flex: none; gap: 4px; grid-template-rows: 28px repeat(3, 30px) 34px 30px repeat(4, 34px); }
+  /* 함수 줄을 접으면 함수 키 3줄을 숨기고 그만큼 그래프가 커짐 */
+  .app[data-mode="graph"].fn-fold .keys { grid-template-rows: 28px 34px 30px repeat(4, 34px); }
+  .app[data-mode="graph"].fn-fold .key[data-group="fn"] { display: none; }
+  .app[data-mode="graph"].kbd-hidden .keys { display: none; }
+  .app[data-mode="graph"] .tab { font-size: 13px; letter-spacing: -.3px; }
+  .app[data-mode="graph"] .tab.on::after { content: " ▴"; font-size: .8em; }   /* 다시 누르면 접힘 */
+}
+/* 세로가 짧은 휴대폰 */
+@media (max-width: 899.98px) and (max-height: 760px) {
+  .app[data-mode="graph"] .graph { min-height: 160px; }
+  .app[data-mode="graph"] .keys { grid-template-rows: 26px repeat(3, 28px) 32px 28px repeat(4, 32px); }
+  .app[data-mode="graph"].fn-fold .keys { grid-template-rows: 26px 32px 28px repeat(4, 32px); }
+  .app[data-mode="graph"] .p-panel.g { max-height: 40px; }   /* 문자 값: 한 줄만 보이고 나머지는 스크롤 */
+  .p-panel.c { padding-top: 3px; }
+  .p-val { height: 26px; }
+}
+/* 휴대폰: 그래프 도구 버튼을 조금 작게 (그래프가 더 보이도록) */
+@media (max-width: 599.98px) {
+  .g-tools { top: 6px; right: 6px; gap: 4px; }
+  .g-btn { min-width: 31px; height: 29px; padding: 0 6px; font-size: 13px; border-radius: 8px; }
+  .g-info { font-size: 13px; padding: 3px 8px; left: 6px; bottom: 6px; }
+  .g-legend { top: 41px; left: 6px; }
+}
+@media (max-width: 340px) { .app[data-mode="graph"] .tab { font-size: 12px; letter-spacing: -.5px; } }
+@media (max-width: 899.98px) and (max-height: 600px) {
+  .app[data-mode="graph"] .graph { min-height: 130px; }
+  .app[data-mode="graph"] .keys { grid-template-rows: 24px repeat(3, 26px) 30px 26px repeat(4, 30px); }
+  .app[data-mode="graph"].fn-fold .keys { grid-template-rows: 24px 30px 26px repeat(4, 30px); }
+}
+@media (min-width: 900px) {
+  .app[data-mode="graph"] .calc { flex: 0 0 420px; max-width: 420px; }
+  .app[data-mode="graph"] .graph { flex: 1 1 auto; }
+  .app[data-mode="graph"] .fpanel { max-height: 40%; }
+  .app[data-mode="graph"] .f-list { max-height: none; }
+  #btnKeysToggle { display: none; }
+}
+@media (min-width: 1100px) {
+  .app[data-mode="graph"] .calc { flex-basis: 460px; max-width: 460px; }
+}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app" data-mode="calc">
 
   <!-- ===== 상단 제목줄 ===== -->
   <header class="topbar">
-    <h1>공학용 계산기</h1>
+    <div class="left">
+      <h1>공학용 계산기</h1>
+      <!-- 계산기 / 그래프 전환 -->
+      <div class="mode-seg" role="tablist" aria-label="화면 고르기">
+        <button type="button" data-mode="calc" class="on" role="tab" aria-selected="true">계산기</button>
+        <button type="button" data-mode="graph" role="tab" aria-selected="false">그래프</button>
+      </div>
+    </div>
     <div class="top-actions">
       <button class="top-btn" id="btnTheme" type="button" aria-haspopup="true">테마</button>
       <button class="top-btn" id="btnHistory" type="button">기록<span class="count" id="histCount">0</span></button>
@@ -485,9 +711,20 @@ button { font-family: inherit; }
   <main class="layout">
     <!-- ===== 계산기 본체 ===== -->
     <section class="calc" aria-label="계산기">
+      <!-- 그래프 모드: 함수 목록 (y = …) -->
+      <div class="fpanel" id="fpanel">
+        <div class="f-head">
+          <b>식 목록</b>
+          <button class="f-btn" id="btnAddFn" type="button"><span class="long">+ 식 추가</span><span class="short">+ 식</span></button>
+          <button class="f-btn" id="btnKeysToggle" type="button" title="키패드 숨기기/보이기">키패드 ▾</button>
+        </div>
+        <div class="f-list" id="fList"></div>
+        <!-- 그래프 식에 쓴 문자(계수·상수)의 값, 슬라이더 -->
+        <div class="p-panel g" id="gParams" hidden></div>
+      </div>
       <div class="display">
         <div class="disp-top">
-          <span class="badge" id="modeBadge">DEG</span>
+          <button class="badge" id="modeBadge" type="button" title="눌러서 도(DEG) / 라디안(RAD) 바꾸기">DEG</button>
           <span class="ans-info" id="ansInfo">Ans = 0</span>
           <button class="kbd-btn" id="btnKbd" type="button" title="휴대폰 자판으로 직접 입력">자판 입력</button>
         </div>
@@ -495,8 +732,8 @@ button { font-family: inherit; }
         <div class="editor" id="editor" tabindex="0" role="textbox" aria-label="수식 입력"></div>
         <!-- 결과 -->
         <div class="result" id="result" aria-live="polite"></div>
-        <!-- 휴대폰 자판 입력을 받는 숨은 칸 -->
-        <input id="kbdSink" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-hidden="true" tabindex="-1">
+        <!-- 식에 쓴 문자(계수·상수)의 값 입력 칸 -->
+        <div class="p-panel c" id="cParams" hidden></div>
       </div>
 
       <!-- 키패드: 버튼은 아래 스크립트가 만들어 넣음 -->
@@ -517,7 +754,25 @@ button { font-family: inherit; }
       <ul class="h-list" id="hList"></ul>
       <div class="h-tip">수식을 누르면 다시 불러와 고칠 수 있고, 결과를 누르면 지금 식에 넣어요. 기록은 새로고침하면 사라져요.</div>
     </aside>
+
+    <!-- ===== 그래프 그리는 영역 ===== -->
+    <section class="graph" id="graph" aria-label="그래프">
+      <canvas id="gCanvas"></canvas>
+      <div class="g-tools">
+        <button class="g-btn" type="button" data-g="in" title="확대" aria-label="확대">+</button>
+        <button class="g-btn" type="button" data-g="out" title="축소" aria-label="축소">−</button>
+        <button class="g-btn" type="button" data-g="home" title="처음 화면으로" aria-label="처음 화면으로">⌂</button>
+        <button class="g-btn" type="button" data-g="pi" title="x축 눈금을 π 단위로" aria-label="π 눈금">π</button>
+        <button class="g-btn" type="button" data-g="deg" id="gDegBtn" title="각도 단위 (RAD: 라디안, DEG: 도)">RAD</button>
+        <button class="g-btn" type="button" data-g="tan" title="누른 점의 접선과 기울기 보기">접선</button>
+        <button class="g-btn" type="button" data-g="png" title="그래프를 그림 파일로 저장">저장</button>
+      </div>
+      <div class="g-legend" id="gLegend" hidden></div>
+      <div class="g-info" id="gInfo"></div>
+    </section>
   </main>
+  <!-- 휴대폰 자판 입력을 받는 숨은 칸 -->
+  <input id="kbdSink" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-hidden="true" tabindex="-1">
 
   <div class="backdrop" id="backdrop"></div>
   <div class="theme-menu" id="themeMenu" role="menu"><h3>테마 고르기</h3></div>
@@ -547,6 +802,9 @@ const state = {
   tab: "basic",         // 지금 보고 있는 함수 탭
   nativeKbd: false,     // 휴대폰 자판 사용 여부
 };
+// 문자(계수·상수) 값: 계산기와 그래프가 함께 씀
+const PARAMS = {};      // 이름 → { value, min, max, playing, dir }
+const PV = {};          // 이름 → 값 (계산할 때 찾아보는 표)
 const history = [];     // 계산 기록 (새로고침 전까지 누적)
 let historyNo = 0;      // 기록 번호
 
@@ -563,9 +821,10 @@ const FUNC_NAMES = {
   sqrt:"sqrt", cbrt:"cbrt", root:"root", log:"log", ln:"ln", exp:"exp", abs:"abs",
   floor:"floor", ceil:"ceil", round:"round", npr:"nPr", ncr:"nCr", mod:"mod",
   gcd:"gcd", lcm:"lcm", max:"max", min:"min", mean:"mean", rand:"rand",
+  diff:"diff", integ:"integ", grad:"grad",                      // 미분, 적분, 그래디언트
 };
 // 글자 이름들을 긴 것부터 맞춰보기 위해 정렬 (예: "sinh"를 "sin"+"h"로 잘못 읽지 않도록)
-const WORDS = Object.keys(FUNC_NAMES).concat(["ans", "pi", "e"]).sort((a, b) => b.length - a.length);
+const WORDS = Object.keys(FUNC_NAMES).concat(["ans", "pi", "e", "x", "y"]).sort((a, b) => b.length - a.length);
 
 function tokenize(src) {
   const tokens = [];
@@ -611,10 +870,15 @@ function tokenize(src) {
       while (j < run.length) {
         const rest = run.slice(j).toLowerCase();
         const w = WORDS.find((word) => rest.startsWith(word));
-        if (!w) throw new CalcError(`알 수 없는 글자 '${run[j]}' 가 있어요`);
+        if (!w) {
+          // 함수 이름이 아닌 소문자 한 글자는 문자(계수·상수, 변수)로 읽음
+          if (/[a-z]/.test(run[j])) { tokens.push({ type: "var", name: run[j] }); j++; continue; }
+          throw new CalcError(`알 수 없는 글자 '${run[j]}' 가 있어요 (문자는 소문자로 써요)`);
+        }
         if (w === "ans") tokens.push({ type: "ans" });
         else if (w === "pi") tokens.push({ type: "const", name: "pi" });
         else if (w === "e") tokens.push({ type: "const", name: "e" });
+        else if (w === "x" || w === "y") tokens.push({ type: "var", name: w });   // 그래프용 변수 x, y
         else tokens.push({ type: "func", name: FUNC_NAMES[w] });
         j += w.length;
       }
@@ -678,7 +942,7 @@ class Parser {
   }
   // 바로 값이 시작되는 조각인지 (생략된 곱셈 판단용)
   startsValue(k) {
-    return !!k && (k.type === "num" || k.type === "const" || k.type === "ans" || k.type === "func" || k.type === "(" || k.type === "ph");
+    return !!k && (k.type === "num" || k.type === "const" || k.type === "ans" || k.type === "func" || k.type === "(" || k.type === "ph" || k.type === "var");
   }
   // 음수 부호 (-2^2 = -4 가 되도록 거듭제곱보다 나중에 계산)
   parseUnary() {
@@ -714,6 +978,7 @@ class Parser {
     if (k.type === "op") return this.parseUnary();   // 2×-3 같은 경우
     this.next();
     if (k.type === "ph") return { type: "ph" };
+    if (k.type === "var") return { type: "var", name: k.name };
     if (k.type === "num") return { type: "num", v: k.value, text: k.text };
     if (k.type === "const") return { type: "const", name: k.name };
     if (k.type === "ans") return { type: "ans" };
@@ -807,16 +1072,26 @@ const ARITY = {
   sinh:[1,1], cosh:[1,1], tanh:[1,1], asinh:[1,1], acosh:[1,1], atanh:[1,1],
   sqrt:[1,1], cbrt:[1,1], root:[2,2], log:[1,2], ln:[1,1], exp:[1,1], abs:[1,1],
   floor:[1,1], ceil:[1,1], round:[1,2], nPr:[2,2], nCr:[2,2], mod:[2,2],
-  gcd:[2,99], lcm:[2,99], max:[1,99], min:[1,99], mean:[1,99], rand:[0,0],
+  gcd:[2,99], lcm:[2,99], max:[1,99], min:[1,99], mean:[1,99], rand:[0,0], diff:[1,3], integ:[3,4], grad:[2,4],
 };
 // 사람이 읽기 좋은 함수 이름 (오류 메시지용)
-const NICE = { asin:"sin⁻¹", acos:"cos⁻¹", atan:"tan⁻¹", asinh:"sinh⁻¹", acosh:"cosh⁻¹", atanh:"tanh⁻¹", sqrt:"√", cbrt:"∛", root:"거듭제곱근" };
+const NICE = { asin:"sin⁻¹", acos:"cos⁻¹", atan:"tan⁻¹", asinh:"sinh⁻¹", acosh:"cosh⁻¹", atanh:"tanh⁻¹", sqrt:"√", cbrt:"∛", root:"거듭제곱근", diff:"미분", integ:"적분", grad:"∇" };
 
 function evaluate(node, ctx) {
   switch (node.type) {
     case "num": return node.v;
     case "const": return node.name === "pi" ? Math.PI : Math.E;
     case "ans": return ctx.ans;
+    case "var": {
+      // 먼저 그래프 좌표나 미분·적분 변수에서 찾고, 없으면 따로 입력한 문자 값에서 찾음
+      let v = ctx[node.name];
+      if (v === undefined && ctx._p) v = ctx._p[node.name];
+      if (v === undefined) {
+        if (ctx.graph) throw new CalcError(`문자 ${node.name} 의 값이 없어요`);
+        throw new CalcError(`문자 ${node.name} 의 값을 아래 칸에 입력해 주세요`);
+      }
+      return v;
+    }
     case "ph": throw new CalcError("빈칸(□)을 채워 주세요");
     case "group": return evaluate(node.a, ctx);
     case "neg": return -evaluate(node.a, ctx);
@@ -841,7 +1116,8 @@ function evaluate(node, ctx) {
       if (node.op === "÷") { if (r === 0) throw new CalcError("0으로 나눌 수 없어요"); return l / r; }
       break;
     }
-    case "func": return evalFunc(node, ctx);
+    case "func":   // 미분·적분은 식 안의 x 를 바꿔 가며 계산해야 해서 따로 처리
+      return node.name === "diff" || node.name === "integ" || node.name === "grad" ? evalCalculus(node, ctx) : evalFunc(node, ctx);
   }
   throw new CalcError("계산할 수 없는 식이에요");
 }
@@ -911,10 +1187,153 @@ function evalFunc(node, ctx) {
   throw new CalcError("알 수 없는 함수예요");
 }
 
+/* =====================================================================
+   3-1. 미분·적분·그래디언트 (수치 계산)
+   - diff(식, a, 변수)       : 변수 = a 에서의 미분계수 (변수를 안 쓰면 x)
+   - integ(식, a, b, 변수)   : a 부터 b 까지 정적분 (d변수)
+   - grad(식, p1, p2, p3)    : 점 (x, y, z) = (p1, p2, p3) 에서의 기울기 벡터 ∇f (맨 바깥에서만)
+   식 안의 그 변수만 바꿔 가며 계산하고, 나머지 문자는 따로 입력한 값을 씀
+   ===================================================================== */
+// 변수 칸 → 변수 이름 (칸이 없으면 x)
+function calcVar(arg) {
+  if (!arg) return "x";
+  if (arg.type !== "var") throw new CalcError("미분·적분의 변수 칸에는 문자 하나만 써요 (예: x, y, t)");
+  return arg.name;
+}
+function evalCalculus(node, ctx) {
+  const body = node.args[0];
+  if (node.name === "grad") throw new CalcError("∇(그래디언트)는 벡터라서 다른 계산과 섞어 쓸 수 없어요. ∇ 하나만 계산해 주세요");
+  const c2 = Object.assign({}, ctx);                     // 식 안의 변수만 바꿔 계산하기 위한 복사본
+  if (node.name === "diff") {
+    if (node.args.length < 1 || node.args.length > 3) throw new CalcError("미분 상자의 모양이 올바르지 않아요");
+    let a;
+    if (node.args.length >= 2) a = evaluate(node.args[1], ctx);
+    else if (ctx.x === undefined) throw new CalcError("도함수는 그래프에서 그려요. 값을 구하려면 미분 버튼(x = □)을 쓰세요");
+    else a = ctx.x;
+    const vn = calcVar(node.args[2]);                      // 미분할 변수 (d/dx, d/dy …)
+    return numDiff((t) => { c2[vn] = t; return evaluate(body, c2); }, a);
+  }
+  if (node.args.length < 3 || node.args.length > 4) throw new CalcError("적분 상자의 모양이 올바르지 않아요");
+  const vn = calcVar(node.args[3]);
+  const F = (t) => { c2[vn] = t; return evaluate(body, c2); };
+  return numInteg(F, evaluate(node.args[1], ctx), evaluate(node.args[2], ctx));
+}
+// 그래디언트 ∇f: 점의 좌표 개수(1~3)에 맞춰 x, y, z 로 각각 미분 (나머지 변수는 그 점의 값으로 고정)
+function calcGrad(node, ctx) {
+  const body = node.args[0];
+  const pts = node.args.slice(1).map((a) => evaluate(a, ctx));
+  if (pts.length < 1 || pts.length > 3) throw new CalcError("∇ 의 점은 (x, y) 또는 (x, y, z) 처럼 쉼표로 구분해 써요");
+  // 식에 쓰인 x, y, z 를 보고 필요한 좌표 개수 정하기 (y 가 있으면 2개, z 가 있으면 3개)
+  const fv = freeVars(body);
+  const need = fv.has("z") ? 3 : fv.has("y") ? 2 : 1;
+  if (pts.length < need) {
+    const list = ["x", "y", "z"].slice(0, need).join(", ");
+    throw new CalcError(`식에 ${need === 3 ? "z" : "y"} 가 있어서 점의 좌표를 ${need}개 넣어야 해요 (${list})`);
+  }
+  const names = ["x", "y", "z"].slice(0, pts.length);
+  const base = Object.assign({}, ctx);
+  names.forEach((n, i) => { base[n] = pts[i]; });
+  return names.map((n, i) => {
+    const c3 = Object.assign({}, base);
+    return numDiff((t) => { c3[n] = t; return evaluate(body, c3); }, pts[i]);
+  });
+}
+// 식에서 값이 정해지지 않은 문자 찾기 (미분·적분 변수로 묶인 문자는 제외)
+function freeVars(node, bound, out) {
+  bound = bound || new Set(); out = out || new Set();
+  if (!node || typeof node !== "object") return out;
+  if (node.type === "var") { if (!bound.has(node.name)) out.add(node.name); return out; }
+  if (node.type === "func" && (node.name === "diff" || node.name === "integ" || node.name === "grad")) {
+    const args = node.args || [];
+    const vIdx = node.name === "diff" ? 2 : node.name === "integ" ? 3 : -1;     // 변수 칸의 위치
+    const inner = new Set(bound);
+    if (node.name === "grad") ["x", "y", "z"].forEach((n) => inner.add(n));
+    else inner.add(args[vIdx] && args[vIdx].type === "var" ? args[vIdx].name : "x");
+    freeVars(args[0], inner, out);                                            // 식 안: 변수는 묶여 있음
+    args.slice(1).forEach((a, i) => { if (i + 1 !== vIdx) freeVars(a, bound, out); });   // 끝값, 점 좌표
+    return out;
+  }
+  Object.values(node).forEach((v) => {
+    if (Array.isArray(v)) v.forEach((c) => freeVars(c, bound, out));
+    else if (v && typeof v === "object" && v.type) freeVars(v, bound, out);
+  });
+  return out;
+}
+
+// 미분계수: 양쪽으로 조금씩 떨어진 두 점의 기울기 (간격을 두 번 바꿔 오차를 줄임: 리처드슨 외삽)
+function numDiff(F, a) {
+  const f = (t) => { const v = F(t); if (!Number.isFinite(v)) throw new CalcError(""); return v; };
+  try {
+    const h = 1e-3 * Math.max(1, Math.abs(a));
+    const D = (s) => (f(a + s) - f(a - s)) / (2 * s);
+    const r = (4 * D(h / 2) - D(h)) / 3;
+    // 뾰족한 점(예: |x| 의 x = 0) 확인: 아주 가까운 왼쪽 기울기와 오른쪽 기울기가 다르면 미분 불가
+    const e = 1e-6 * Math.max(1, Math.abs(a)), f0 = f(a);
+    const L = (f0 - f(a - e)) / e, R = (f(a + e) - f0) / e;
+    if (!Number.isFinite(r) || Math.abs(L - R) > 1e-3 * (1 + Math.abs(r))) throw new CalcError("");
+    return Math.abs(r) < 1e-10 ? 0 : r;                  // 0.0000000000001 같은 오차는 0 으로
+  } catch (err) {
+    if (err instanceof CalcError && err.message.startsWith("문자")) throw err;   // 문자 값이 없다는 안내는 그대로
+    throw new CalcError("이 점에서는 미분할 수 없어요");
+  }
+}
+
+// 정적분: 구간을 반씩 나누며, 나눠도 값이 거의 안 바뀔 때까지 계산 (가우스-르장드르 5점 공식)
+// 구간의 끝점에서는 값을 구하지 않으므로 ∫₀¹ 1/√x dx 처럼 끝에서 무한대인 경우도 계산 가능
+function numInteg(F, a, b) {
+  if (!Number.isFinite(a) || !Number.isFinite(b)) throw new CalcError("적분 구간을 확인해 주세요");
+  if (a === b) return 0;
+  if (a > b) return -numInteg(F, b, a);                   // 위끝이 더 작으면 부호만 바뀜
+  const X = [0, -0.5384693101056831, 0.5384693101056831, -0.906179845938664, 0.906179845938664];
+  const W = [0.5688888888888889, 0.4786286704993665, 0.4786286704993665, 0.2369268850561891, 0.2369268850561891];
+  let count = 0;                                          // 계산 횟수 (너무 많으면 멈춤)
+  let hitLimit = false;                                   // 아주 잘게 나눠도 안 맞았는지 (끝점에서 무한대인 경우 등)
+  let G2 = F;                                             // 실제로 적분할 식 (아래에서 바꿀 수 있음)
+  const gl = (lo, hi) => {
+    const m = (lo + hi) / 2, r = (hi - lo) / 2;
+    let s = 0;
+    for (let k = 0; k < 5; k++) {
+      let v;
+      try { v = G2(m + r * X[k]); } catch (e) {
+        if (e instanceof CalcError && e.message.startsWith("문자")) throw e;   // 문자 값이 없다는 안내는 그대로
+        v = NaN;
+      }
+      if (!Number.isFinite(v)) throw new CalcError("적분 구간 안에 정의되지 않는 곳이 있어요");
+      s += W[k] * v;
+    }
+    count += 5;
+    return s * r;
+  };
+  const rec = (lo, hi, whole, tol, depth) => {
+    const m = (lo + hi) / 2, L = gl(lo, m), R = gl(m, hi), sum = L + R;
+    if (Math.abs(sum - whole) <= tol) return sum;
+    if (depth >= 45) { hitLimit = true; return sum; }
+    if (count > 200000) throw new CalcError("적분값을 정확히 구하기 어려워요 (구간이나 식을 확인해 주세요)");
+    return rec(lo, m, L, tol / 2, depth + 1) + rec(m, hi, R, tol / 2, depth + 1);
+  };
+  const first = gl(a, b);
+  let v = rec(a, b, first, 1e-12 * (1 + Math.abs(first)), 0);
+  if (hitLimit) {
+    // 끝점 근처에서 값이 무한대로 커지는 경우: x = a + (b−a)(3t² − 2t³) 로 바꿔 끝부분을 부드럽게 펴서 다시 계산
+    G2 = (t) => { const u = 3 * t * t - 2 * t * t * t; return F(a + (b - a) * u) * (b - a) * 6 * t * (1 - t); };
+    count = 0; hitLimit = false;
+    const f2 = gl(0, 1);
+    v = rec(0, 1, f2, 1e-12 * (1 + Math.abs(f2)), 0);
+  }
+  if (!Number.isFinite(v)) throw new CalcError("적분값이 발산해요");
+  return v;
+}
+
 /* 문자열 수식 → 숫자 (오류면 CalcError) */
 function calculate(src) {
   const tree = new Parser(tokenize(src), false).parseAll();
-  const v = evaluate(tree, { deg: state.deg, ans: state.ans });
+  const ctx = { deg: state.deg, ans: state.ans, _p: PV };          // _p: 따로 입력한 문자 값
+  if (tree.type === "func" && tree.name === "grad") {               // ∇f 는 벡터 { vec: [...] } 로 돌려줌
+    const vec = calcGrad(tree, ctx);
+    if (vec.some((q) => !Number.isFinite(q))) throw new CalcError("이 점에서는 기울기 벡터를 구할 수 없어요");
+    return { vec };
+  }
+  const v = evaluate(tree, ctx);
   if (Number.isNaN(v)) throw new CalcError("정의되지 않는 계산이에요");
   if (!Number.isFinite(v)) throw new CalcError("값이 너무 커서 계산할 수 없어요");
   return v;
@@ -992,6 +1411,10 @@ const SLOTS = {
   ncr: ["n", "r"],          // 조합
   npr: ["n", "r"],          // 순열
   abs: ["body"],            // 절댓값
+  deriv: ["v", "body", "at"],         // 미분계수: d/d변수(식)|변수=값   (v: 변수 칸, 처음엔 x)
+  deriv1: ["v", "body"],              // 도함수: d/d변수(식)  (그래프용)
+  integ: ["lo", "hi", "body", "v"],   // 정적분: 아래끝, 위끝, 식, d변수
+  grad: ["body", "pt"],               // 그래디언트: ∇(식)|(x,y,z)=(점)
 };
 
 // 새 빈 줄 만들기 (parent: 이 줄을 품고 있는 상자 정보)
@@ -1002,6 +1425,7 @@ function mkChar(v) { return { t: "c", v }; }
 function mkNode(t, props) {
   const n = Object.assign({ t }, props || {});
   SLOTS[t].forEach((k) => { n[k] = mkRow({ node: n, key: k }); });
+  if (n.v) fillChars(n.v, "x");     // 미분·적분 변수 칸은 x 로 시작 (눌러서 y, z, t 등으로 바꿀 수 있음)
   return n;
 }
 function isNode(it) { return !!SLOTS[it.t]; }
@@ -1022,7 +1446,7 @@ function cloneRow(row, parent) {
     if (isNode(it)) {
       c = Object.assign({}, it);
       SLOTS[it.t].forEach((k) => { c[k] = cloneRow(it[k], { node: c, key: k }); });
-    } else c = { t: "c", v: it.v };
+    } else c = { t: "c", v: it.v, lit: it.lit };
     c.ownerRow = nr;
     nr.push(c);
   });
@@ -1036,13 +1460,20 @@ let cur = { row: root, idx: 0 };     // 커서 위치
 /* ---------------------------------------------------------------------
    5-1. 글자 수식으로 바꾸기 (계산용)
    --------------------------------------------------------------------- */
-const OPERATOR_CHARS = ["+", "-", "×", "÷", ","];
+// 등호·부등호 (그래프에서만 입력)
+const REL = ["=", "<", ">", "≤", "≥"];
+const isRel = (it) => !isNode(it) && REL.includes(it.v);
+// 이 기호들 다음은 '새 값의 시작' (음수 부호 판단, 지수 밑 판단, 분수 버튼이 가져갈 범위)
+const OPERATOR_CHARS = ["+", "-", "×", "÷", ","].concat(REL);
 function serialize(row) {
   if (row.length === 0) return "□";                  // 빈칸은 □ 로 → "빈칸을 채워 주세요"
   let s = "";
+  // 앞이 글자로 끝나고 새 조각이 글자로 시작하면 사이에 × (a 다음 sin 이 asin 으로 읽히는 것 방지)
+  const join = (a, b) => (/[A-Za-z]$/.test(a) && /^[A-Za-z]/.test(b) ? a + "×" + b : a + b);
   row.forEach((it, i) => {
-    if (!isNode(it)) { s += it.v; return; }
+    if (!isNode(it)) { s = join(s, it.v); return; }
     const S = (k) => serialize(it[k]);
+    const s0 = s; s = "";
     switch (it.t) {
       case "frac": s += `((${S("num")})÷(${S("den")}))`; break;
       case "pow": {
@@ -1060,7 +1491,12 @@ function serialize(row) {
       case "ncr": s += `nCr(${S("n")},${S("r")})`; break;
       case "npr": s += `nPr(${S("n")},${S("r")})`; break;
       case "abs": s += `abs(${S("body")})`; break;
+      case "deriv": s += `diff(${S("body")},${S("at")},${S("v")})`; break;
+      case "deriv1": s += `diff(${S("body")},${baseLetter(it.v) || "x"},${S("v")})`; break;   // 지금 변수 값에서의 미분 = 도함수
+      case "integ": s += `integ(${S("body")},${S("lo")},${S("hi")},${S("v")})`; break;
+      case "grad": s += `grad(${S("body")},${S("pt")})`; break;
     }
+    s = join(s0, s);
   });
   return s;
 }
@@ -1076,6 +1512,20 @@ const CURSOR = '<span class="cur"></span>';
 const SVG_SQRT = '<svg class="sign" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0,62 L22,52 L50,98 L100,1"/></svg>';
 const SVG_LP = '<svg class="pl" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M85,2 Q5,50 85,98"/></svg>';
 const SVG_RP = '<svg class="pr" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M15,2 Q95,50 15,98"/></svg>';
+// 미분 기호 d/d변수 (작은 분수 모양, 변수 칸은 눌러서 바꿀 수 있음)
+const ddx = (vHtml, single) => `<span class="m-frac m-ddx"><span class="fn">d</span><span class="fd">d${single ? vHtml : "(" + vHtml + ")"}</span></span>`;
+// 변수 칸 안의 첫 문자 (d/d(y²) 의 y)
+function baseLetter(row) {
+  for (const it of row) {
+    if (isNode(it)) { const b = slotRows(it).map(baseLetter).find(Boolean); if (b) return b; }
+    else if (/^[a-z]$/.test(it.v) && it.v !== "e") return it.v;
+  }
+  return "";
+}
+// 변수 칸이 문자 하나뿐인지 (아니면 d( ) 로 괄호를 붙여 보여 줌)
+const singleVar = (n) => n.v.length <= 1 && (n.v.length === 0 || !isNode(n.v[0]));
+// 변수 칸의 글자 (|x=값 에 보여 줄 이름)
+const varText = (n) => (singleVar(n) ? (n.v.length ? n.v[0].v : "□") : baseLetter(n.v) || "□");
 // 함수 이름을 보기 좋게
 const FUNC_LABEL = {
   asin: "sin<span class='m-sup'>−1</span>", acos: "cos<span class='m-sup'>−1</span>", atan: "tan<span class='m-sup'>−1</span>",
@@ -1108,21 +1558,23 @@ function renderItem(it, rid, i, row) {
     if (v === "+" || v === "-" || v === "×" || v === "÷") {
       // 맨 앞이나 다른 기호 바로 뒤의 - 는 음수 부호라서 띄어 쓰지 않음
       const prev = row[i - 1];
-      const unary = v === "-" && (!prev || (!isNode(prev) && ["+", "-", "×", "÷", ","].includes(prev.v)));
+      const unary = v === "-" && (!prev || (!isNode(prev) && OPERATOR_CHARS.includes(prev.v)));
       const sym = { "+": "+", "-": "−", "×": "×", "÷": "÷" }[v];
       return unary ? `<span${a}>−</span>` : `<span class="m-op"${a}>${sym}</span>`;
     }
     if (v === ",") return `<span class="m-comma"${a}>,</span>`;
     if (v === "e") return `<span class="m-e"${a}>e</span>`;
     if (v === "Ans") return `<span class="m-ans"${a}>Ans</span>`;
-    if (/^[A-Za-z]$/.test(v)) return `<span class="m-let"${a}>${v}</span>`;   // 함수 이름을 치는 중인 글자
+    if (v === "x" || v === "y") return `<span class="m-var"${a}>${v}</span>`;   // 변수 x, y (기울임)
+    if (REL.includes(v)) return `<span class="m-rel"${a}>${v}</span>`;            // 등호, 부등호
+    if (/^[A-Za-z]$/.test(v)) return `<span class="m-var"${a}>${v}</span>`;   // 문자 (계수·상수)
     return `<span${a}>${esc(v)}</span>`;
   }
   switch (it.t) {
     case "frac": return `<span class="m-frac"${a}><span class="fn">${R("num")}</span><span class="fd">${R("den")}</span></span>`;
     case "pow": {
       const prev = row[i - 1];
-      const noBase = !prev || (!isNode(prev) && ["+", "-", "×", "÷", ","].includes(prev.v));
+      const noBase = !prev || (!isNode(prev) && OPERATOR_CHARS.includes(prev.v));
       return `${noBase ? '<span class="m-ph"></span>' : ""}<span class="m-sup"${a}>${R("exp")}</span>`;
     }
     case "sqrt": return `<span class="m-sqrt"${a}>${SVG_SQRT}<span class="body">${R("body")}</span></span>`;
@@ -1146,10 +1598,26 @@ function renderItem(it, rid, i, row) {
     case "ncr": case "npr":
       return `<span${a}><span class="m-sub">${R("n")}</span>${it.t === "ncr" ? "C" : "P"}<span class="m-sub">${R("r")}</span></span>`;
     case "abs": return `<span class="m-abs"${a}>${R("body")}</span>`;
+    case "deriv":    // d/d변수 (식) |변수=값
+      return `<span${a}>${ddx(R("v"), singleVar(it))}<span class="m-par">${SVG_LP}${R("body")}${SVG_RP}</span><span class="m-at"><span class="m-sub">${varText(it)}=${R("at")}</span></span></span>`;
+    case "deriv1":   // d/d변수 (식)
+      return `<span${a}>${ddx(R("v"), singleVar(it))}<span class="m-par">${SVG_LP}${R("body")}${SVG_RP}</span></span>`;
+    case "integ":    // ∫ 아래끝~위끝 식 d변수
+      return `<span class="m-int"${a}><span class="m-intsign">∫</span><span class="m-lim"><span class="hi">${R("hi")}</span><span class="lo">${R("lo")}</span></span>${R("body")}<span class="m-dx">d${R("v")}</span></span>`;
+    case "grad": {   // ∇ (식) |(x,y,z)=(점)
+      const have = it.pt.length ? it.pt.filter((q) => !isNode(q) && q.v === ",").length + 1 : 1;   // 넣은 좌표 개수
+      const need = hasLetter(it.body, "z") ? 3 : hasLetter(it.body, "y") ? 2 : 1;                     // 식에 쓰인 x, y, z
+      const nv = Math.min(3, Math.max(have, need));
+      const vars = ["x", "y", "z"].slice(0, nv).map((q) => `<i>${q}</i>`).join(",");
+      const ghost = Array(Math.max(0, nv - have)).fill(',<span class="m-ph ghost"></span>').join("");   // 아직 안 넣은 좌표 자리
+      return `<span${a}><span class="m-nabla">∇</span><span class="m-par">${SVG_LP}${R("body")}${SVG_RP}</span><span class="m-at"><span class="m-sub">(${vars})=(${R("pt")}${ghost})</span></span></span>`;
+    }
   }
   return "";
 }
 
+// 줄 안(상자 안까지)에 특정 문자가 있는지
+function hasLetter(row, c) { return row.some((it) => (isNode(it) ? slotRows(it).some((r) => hasLetter(r, c)) : it.v === c)); }
 // 커서가 이 상자 안에 있는지
 function cursorInside(n) {
   if (staticMode) return false;
@@ -1220,8 +1688,41 @@ function exitNode() {
   cur = { row: n.ownerRow, idx: n.ownerRow.indexOf(n) + 1 };
   return true;
 }
+/* 괄호 씌우기: 커서 앞의 덩어리를 괄호로 감싸고, 다시 누를 때마다 앞쪽으로 한 덩어리씩 넓힘
+   예) 1+2×3| → 1+2×(3) → 1+(2×3) → (1+2×3)      (등호·부등호는 넘어가지 않음) */
+function wrapParen() {
+  const row = cur.row, end = cur.idx;
+  const prev = row[end - 1];
+  let start;
+  if (prev && prev.t === "par") {
+    // 바로 앞이 괄호면 넓히기: 괄호 앞의 연산 기호와 그 앞 덩어리까지
+    let j = end - 1;
+    if (j === 0) { toast("이미 이 칸의 식 전체를 괄호로 감쌌어요"); return false; }
+    if (isRel(row[j - 1])) { toast("등호·부등호 앞까지만 감쌀 수 있어요"); return false; }
+    if (!isOperandItem(row[j - 1])) j--;                       // 연산 기호
+    while (j > 0 && isOperandItem(row[j - 1])) j--;             // 그 앞 덩어리
+    start = j;
+    const inner = row.slice(start, end - 1).concat(prev.body.slice());
+    row.splice(start, end - start);
+    const n = mkNode("par");
+    placeItems(n.body, inner, 0);
+    placeItems(row, [n], start);
+    cur = { row, idx: start + 1 };
+    return true;
+  }
+  let j = end;
+  while (j > 0 && isOperandItem(row[j - 1])) j--;
+  if (j === end) { toast("커서 앞에 괄호로 감쌀 식이 없어요"); return false; }
+  start = j;
+  const items = row.splice(start, end - start);
+  const n = mkNode("par");
+  placeItems(n.body, items, 0);
+  placeItems(row, [n], start);
+  cur = { row, idx: start + 1 };
+  return true;
+}
 // ")" 키: 커서를 품은 괄호(또는 함수 괄호) 밖으로 나가기. 괄호가 없으면 가장 안쪽 상자 밖으로
-const PAREN_TYPES = ["par", "func", "func2", "logb", "abs", "sqrt", "root"];   // 괄호로 닫히는 상자들
+const PAREN_TYPES = ["par", "func", "func2", "logb", "abs", "sqrt", "root", "deriv", "deriv1", "integ", "grad"];   // 괄호로 닫히는 상자들
 function exitParen() {
   let row = cur.row, target = null;
   while (row.parent) {
@@ -1229,7 +1730,19 @@ function exitParen() {
     if (PAREN_TYPES.includes(n.t) && !n.implicit) { target = n; break; }
     row = n.ownerRow;
   }
-  if (!target) return exitNode();
+  if (!target) {
+    if (cur.row.parent) return exitNode();
+    // 맨 바깥에서 ")" : 커서 앞의 식 전체(등호·부등호 뒤부터)를 괄호로 감싸기
+    let j = cur.idx;
+    while (j > 0 && !isRel(cur.row[j - 1])) j--;
+    if (j === cur.idx) return false;
+    const items = cur.row.splice(j, cur.idx - j);
+    const n = mkNode("par");
+    placeItems(n.body, items, 0);
+    placeItems(cur.row, [n], j);
+    cur = { row: cur.row, idx: j + 1 };
+    return true;
+  }
   const owner = target.ownerRow, at = owner.indexOf(target);
   cur = { row: owner, idx: at + 1 };
   return true;
@@ -1265,7 +1778,7 @@ function insertNode(n, enterKey) {
 function isOperandItem(it) {
   if (!it) return false;
   if (isNode(it)) return true;
-  return !["+", "-", "×", "÷", ","].includes(it.v);
+  return !OPERATOR_CHARS.includes(it.v);
 }
 function insertFraction() {
   const row = cur.row;
@@ -1300,6 +1813,9 @@ const NAME_TO_NODE = {
   abs: () => mkNode("abs"), mod: () => mkNode("func2", { name: "mod" }), gcd: () => mkNode("func2", { name: "gcd" }),
   lcm: () => mkNode("func2", { name: "lcm" }), ncr: () => mkNode("ncr"), npr: () => mkNode("npr"),
   pi: () => mkChar("π"), ans: () => mkChar("Ans"), rand: () => mkNode("func", { name: "rand" }),
+  // 키보드로 diff → 미분(그래프에서는 도함수), int / integ → 정적분
+  diff: () => mkNode(state.mode === "graph" ? "deriv1" : "deriv"), int: () => mkNode("integ"), integ: () => mkNode("integ"),
+  grad: () => mkNode("grad"),
 };
 const NAME_LIST = Object.keys(NAME_TO_NODE).sort((a, b) => b.length - a.length);
 // 커서 앞에 연달아 있는 영어 글자들
@@ -1307,7 +1823,7 @@ function trailingLetters() {
   let s = "", j = cur.idx;
   while (j > 0) {
     const it = cur.row[j - 1];
-    if (isNode(it) || !/^[A-Za-z]$/.test(it.v)) break;
+    if (isNode(it) || it.lit || !/^[A-Za-z]$/.test(it.v)) break;
     s = it.v + s; j--;
   }
   return s;
@@ -1326,7 +1842,7 @@ function convertName(force) {
   if (!isNode(made)) { insertItems([made]); return "char"; }
   if (made.t === "func" && made.name === "rand") { placeItems(cur.row, [made], cur.idx); cur.idx++; return "char"; }
   made.implicit = true;          // 괄호를 직접 치지 않고 만든 함수 (sin30 처럼)
-  insertNode(made, made.t === "root" ? "body" : null);
+  insertNode(made, made.t === "root" || made.t === "deriv" || made.t === "deriv1" ? "body" : null);
   return "node";
 }
 
@@ -1336,7 +1852,9 @@ function convertName(force) {
    - 상자 바로 뒤에서 누르면: 빈 상자면 통째로 지우고, 내용이 있으면 상자 안으로 들어감
    - 빈칸 맨 앞에서 누르면: 상자를 풀어서 안의 내용만 남김
    --------------------------------------------------------------------- */
-function nodeIsEmpty(n) { return slotRows(n).every((r) => r.length === 0) || (n.t === "root" && n.body.length === 0 && n.idx.length <= 1 && (n.idx.length === 0 || n.idx[0].v === "3")); }
+function nodeIsEmpty(n) {
+  if (n.v) return SLOTS[n.t].every((k) => k === "v" || n[k].length === 0);   // 미분·적분: 변수 칸 말고 다 비었으면 빈 상자
+  return slotRows(n).every((r) => r.length === 0) || (n.t === "root" && n.body.length === 0 && n.idx.length <= 1 && (n.idx.length === 0 || n.idx[0].v === "3")); }
 function backspaceCore() {
   if (cur.idx > 0) {
     const it = cur.row[cur.idx - 1];
@@ -1351,12 +1869,14 @@ function backspaceCore() {
   const n = p.node, owner = n.ownerRow, at = owner.indexOf(n);
   const rows = slotRows(n), k = rows.indexOf(cur.row);
   if (nodeIsEmpty(n)) { owner.splice(at, 1); cur = { row: owner, idx: at }; return; }
+  if (p.key === "v" && k === 0) { cur = { row: owner, idx: at }; return; }   // d/dx 의 변수 칸 맨 앞: 상자 앞으로만 이동
   if (k > 0 && n.t !== "frac") { cur = { row: rows[k - 1], idx: rows[k - 1].length }; return; }
   // 상자 풀기: 분수는 분자 ÷ 분모, 루트·로그는 안쪽 내용만, 나머지는 내용을 이어 붙임
   let keep = rows, sep = null;
   if (n.t === "frac") sep = "÷";
   if (n.t === "func2" || n.t === "ncr" || n.t === "npr") sep = ",";
   if (n.t === "root" || n.t === "logb") keep = [rows[rows.length - 1]];
+  if (n.t === "deriv" || n.t === "deriv1" || n.t === "integ" || n.t === "grad") keep = [n.body];   // 미분·적분 상자를 풀면 식만 남김
   const pieces = []; let offset = 0;
   keep.forEach((r, i) => {
     if (i > 0 && sep && r.length && pieces.length) pieces.push(mkChar(sep));
@@ -1388,13 +1908,27 @@ function refresh() {
   // --- 수식 그리기 ---
   rowRegistry = [];
   if (root.length === 0 && cur.row === root) {
+    const hint = state.mode === "graph" ? "예: x², y=2x+1, x²+y²=4, y>x" : "아래 버튼으로 입력하세요. 분수, 지수 버튼을 누르면 빈칸이 생겨요";
     editorEl.innerHTML = `<span class="row" data-rid="0"><span class="m-ph on">${CURSOR}</span></span>
-      <span class="hint">&nbsp; 아래 버튼으로 입력하세요. 분수, 지수 버튼을 누르면 빈칸이 생겨요</span>`;
+      <span class="hint">&nbsp; ${hint}</span>`;
     rowRegistry = [root];
   } else {
     editorEl.innerHTML = renderRow(root);
   }
   keepCursorVisible();
+  // --- 그래프 모드: 식을 다시 읽고 그래프 다시 그리기 ---
+  if (state.mode === "graph") {
+    const f = G.fns[G.active];
+    f.tree = root;
+    compileFn(f);
+    const rowEl = fListEl.querySelector(`.f-row[data-i="${G.active}"]`);
+    if (rowEl) { rowEl.querySelector(".f-err").textContent = f.err; rowEl.querySelector(".f-y").innerHTML = yLabel(f); }
+    renderLegend();
+    updateGraphParams();
+    scheduleDraw();
+    return;
+  }
+  updateCalcParams();      // 계산기: 식에 쓴 문자의 값 칸
   // --- 미리 계산 (= 누르기 전, 흐리게) ---
   if (!state.justEvaluated) {
     resultEl.classList.remove("final");
@@ -1419,6 +1953,10 @@ function keepCursorVisible() {
 
 // 결과 줄 HTML: (분수 표시) = 값
 function resultHTML(v) {
+  if (v && v.vec) {                    // ∇f: (a, b, c) 와 크기 |∇f|
+    const mag = Math.hypot(...v.vec);
+    return `<span class="fracchip" title="벡터의 크기">|∇f| = ${formatNumber(mag).html}</span><span class="val">= (${v.vec.map((q) => formatNumber(q).html).join(", ")})</span>`;
+  }
   const f = formatNumber(v);
   const fr = toFraction(v);
   const chip = fr ? `<span class="fracchip" title="분수로 나타내면">= <span class="m-frac"><span class="fn">${fr.n < 0 ? "−" : ""}${Math.abs(fr.n)}</span><span class="fd">${fr.d}</span></span></span>` : "";
@@ -1433,11 +1971,16 @@ function doEvaluate() {
   const src = serialize(root);
   try {
     const v = calculate(src);
-    state.ans = cleanNumber(v);
     state.justEvaluated = true;
     resultEl.classList.add("final");
     resultEl.innerHTML = resultHTML(v);
-    $("ansInfo").innerHTML = `Ans = ${formatNumber(v).html}`;
+    if (!v.vec) {                       // 벡터(∇) 결과는 Ans 로 쓰지 않음
+      state.ans = cleanNumber(v);
+      $("ansInfo").innerHTML = `Ans = ${formatNumber(v).html}`;
+    }
+    if (state.deg && /diff|integ/.test(src) && /sin|cos|tan/.test(src)) {
+      toast("지금 각도 단위가 DEG(도)예요. 미분·적분에서 삼각함수는 보통 RAD(라디안)로 계산해요", 4500);
+    }
     addHistory(src, v);
   } catch (e) {
     resultEl.classList.add("final");
@@ -1465,15 +2008,21 @@ function startAfterResult(afterAns) {
 function act(name, post) {
   const [cmd, arg] = name.split(":");
   // 화면 조작 동작
-  if (cmd === "eval") { doEvaluate(); return; }
+  if (cmd === "eval" || cmd === "gnew") {
+    if (state.mode === "graph") { addFn(); return; }     // 그래프에서는 = (Enter) → 새 식
+    if (cmd === "eval") doEvaluate();
+    return;
+  }
   if (cmd === "clear") { state.justEvaluated = false; root = mkRow(null); cur = { row: root, idx: 0 }; refresh(); return; }
   if (cmd === "deg") { toggleDeg(); return; }
+  if (cmd === "wrap") { state.justEvaluated = false; }
   if (["left", "right", "up", "down", "back", "home", "end"].includes(cmd)) {
     if (state.justEvaluated) { state.justEvaluated = false; }
     if (cmd === "left") moveLeft();
     if (cmd === "right") moveRight();
-    if (cmd === "up") moveVertical(-1);
-    if (cmd === "down") moveVertical(1);
+    // 위/아래: 분수 안이면 분자↔분모, 그래프에서는 그 밖이면 위/아래 식으로
+    if (cmd === "up" && !moveVertical(-1) && state.mode === "graph" && G.active > 0) { activateFn(G.active - 1); return; }
+    if (cmd === "down" && !moveVertical(1) && state.mode === "graph" && G.active < G.fns.length - 1) { activateFn(G.active + 1); return; }
     if (cmd === "back") backspaceCore();
     if (cmd === "home") cur = { row: root, idx: 0 };
     if (cmd === "end") cur = { row: root, idx: root.length };
@@ -1492,12 +2041,34 @@ function act(name, post) {
       cur.row.parent.node.implicit = false; refresh(); return;
     }
   }
+  // d/dx 의 x 같은 변수 칸: 문자 하나만 들어감 (문자를 누르면 그 문자로 바뀜, x → y)
+  if (cur.row.parent && cur.row.parent.key === "v") {
+    if ((cmd === "ch" || cmd === "lt") && /^[a-z]$/.test(arg) && arg !== "e") {
+      cur.row.splice(0, cur.row.length);
+      placeItems(cur.row, [Object.assign(mkChar(arg), { lit: true })], 0);
+      cur.idx = 1;
+    } else toast("이 칸에는 미분·적분할 변수(문자 하나)를 넣어요. 예: x, y, t");
+    refresh(); return;
+  }
   switch (cmd) {
+    case "lt":       // 문자 키로 넣은 계수·상수 (함수 이름으로 바뀌지 않음)
+      insertItems([Object.assign(mkChar(arg), { lit: true })]);
+      break;
     case "ch":
       // 값이 두 개인 상자(nCr, mod 등)의 첫 빈칸에서 쉼표 → 다음 빈칸으로 이동
       if (arg === "," && cur.row.parent) {
         const n = cur.row.parent.node, rows = slotRows(n), k = rows.indexOf(cur.row);
         if (rows.length > 1 && k < rows.length - 1 && n.t !== "frac") { cur = { row: rows[k + 1], idx: 0 }; break; }
+      }
+      if (arg === "x" || arg === "y") convertName(true);   // sin 다음에 x → sin(x),  ln 다음에 x → ln(x)
+      if (REL.includes(arg)) {
+        // 등호·부등호는 맨 바깥에만: 분수나 괄호 안에 있으면 밖으로 나와서 넣기
+        while (cur.row.parent) exitNode();
+        // < 다음 = → ≤,  > 다음 = → ≥  (키보드로 <= 처럼 칠 때)
+        const prev = cur.row[cur.idx - 1];
+        if (arg === "=" && prev && !isNode(prev) && (prev.v === "<" || prev.v === ">")) {
+          prev.v = prev.v === "<" ? "≤" : "≥"; break;
+        }
       }
       insertChar(arg); if (/^[A-Za-z]$/.test(arg)) convertName(false); break;
     case "frac": insertFraction(); break;
@@ -1507,12 +2078,17 @@ function act(name, post) {
     case "root": insertNode(mkNode("root")); break;
     case "par": insertNode(mkNode("par")); break;
     case "exit": if (!exitParen()) toast("닫을 괄호가 없어요"); break;
+    case "wrap": wrapParen(); break;                         // 괄호 씌우기
     case "func": if (arg === "rand") { insertItems([mkNode("func", { name: "rand" })]); } else insertNode(mkNode("func", { name: arg })); break;
     case "func2": insertNode(mkNode("func2", { name: arg })); break;
     case "logb": insertNode(mkNode("logb")); break;
     case "ncr": insertNode(mkNode("ncr")); break;
     case "npr": insertNode(mkNode("npr")); break;
     case "abs": insertNode(mkNode("abs")); break;
+    case "deriv": insertNode(mkNode("deriv"), "body"); break;     // 미분계수: 식 칸부터
+    case "deriv1": insertNode(mkNode("deriv1"), "body"); break;   // 도함수: 식 칸부터
+    case "grad": insertNode(mkNode("grad")); break;               // 그래디언트: 식 칸부터
+    case "integ": insertNode(mkNode("integ")); break;      // 정적분: 아래끝 칸부터
     case "tenpow": insertChar("1"); insertChar("0"); insertPower(); break;    // 10ˣ
     case "epow": insertChar("e"); insertPower(); break;                       // eˣ
     case "sci": insertChar("×"); insertChar("1"); insertChar("0"); insertPower(); break;  // ×10ⁿ
@@ -1520,10 +2096,26 @@ function act(name, post) {
   refresh();
 }
 
-function toggleDeg() {
-  state.deg = !state.deg;
+// 지금 화면(계산기/그래프)의 각도 단위
+function angleDeg() { return state.mode === "graph" ? G.deg : state.deg; }
+// DEG/RAD 표시를 모두 맞추기
+function updateDegLabels() {
   $("modeBadge").textContent = state.deg ? "DEG" : "RAD";
-  document.querySelectorAll('[data-act="deg"]').forEach((b) => (b.textContent = state.deg ? "DEG" : "RAD"));
+  document.querySelectorAll('[data-act="deg"]').forEach((b) => (b.textContent = angleDeg() ? "DEG" : "RAD"));
+  $("gDegBtn").textContent = G.deg ? "DEG" : "RAD";
+}
+function toggleDeg() {
+  if (state.mode === "graph") {                // 그래프는 각도 단위를 따로 가짐 (기본 RAD)
+    G.deg = !G.deg;
+    G.fns.forEach((f) => compileFn(f));        // 각도 단위가 바뀌면 정적분 값·기울기도 다시 계산
+    renderFnList();
+    updateDegLabels();
+    toast(G.deg ? "그래프 각도 단위: 도(°)" : "그래프 각도 단위: 라디안(rad)");
+    scheduleDraw();
+    return;
+  }
+  state.deg = !state.deg;
+  updateDegLabels();
   toast(state.deg ? "각도 단위: 도(°)" : "각도 단위: 라디안(rad)");
   if (state.justEvaluated) doEvaluate(); else refresh();   // 바뀐 단위로 다시 계산
 }
@@ -1539,6 +2131,7 @@ function typeChar(ch) {
     "[": ["par", false], "]": ["exit", false], ",": ["ch:,", false], "!": ["ch:!", true], "%": ["ch:%", true],
     "π": ["ch:π", false], "²": ["pow:2", true], "³": ["pow:3", true], "√": ["sqrt", false], "∛": ["cbrt", false],
   };
+  if (state.mode === "graph") Object.assign(map, { "=": ["ch:=", false], "<": ["ch:<", false], ">": ["ch:>", false], "≤": ["ch:≤", false], "≥": ["ch:≥", false] });
   if (!map[ch]) return;
   if ("+-−*×÷,/".includes(ch) && !state.justEvaluated) {   // 1/2/2 = (1/2)÷2 처럼 한 줄 수식 규칙
     convertName(true);              // sqrt 처럼 치던 이름이 있으면 먼저 함수로
@@ -1552,10 +2145,25 @@ function typeChar(ch) {
    l: 버튼 글자, a: 동작, post: 직전 결과에 이어 붙는 키, c: 색, sz: 글자 크기, t: 설명
    ===================================================================== */
 const BOX = '<span class="kbox"></span>';            // 버튼 위 작은 빈칸 그림
+const DFRAC = '<span class="kdfrac"><span>d</span><span>dx</span></span>';   // 버튼 위 d/dx
 const K = (l, a, extra = {}) => Object.assign({ l, a, c: "k-fn" }, extra);
 const FUNC_TABS = {
+  // 그래프에서만 보이는 탭: 변수와 등호·부등호
+  rel: {
+    name: "부등호", short: "부등호",
+    graphOnly: true,
+    keys: [
+      K("=", "ch:=", { t: "등호" }), K("&lt;", "ch:<", { t: "작다" }), K("&gt;", "ch:>", { t: "크다" }),
+      K("≤", "ch:≤", { t: "작거나 같다" }), K("≥", "ch:≥", { t: "크거나 같다" }),
+      K('<i class="kx">x</i>', "ch:x", { t: "변수 x" }), K('<i class="kx">y</i>', "ch:y", { t: "변수 y" }),
+      K("π", "ch:π", { t: "원주율" }), K("<i>e</i>", "ch:e", { t: "자연상수" }), K(`|${BOX}|`, "abs", { t: "절댓값" }),
+      K("(", "par", { t: "괄호 열기" }), K(")", "exit", { t: "괄호 닫고 나오기" }), K(",", "ch:,", { t: "쉼표 (값 구분)" }),
+      K(`×10<sup>${BOX}</sup>`, "sci", { sz: "k-small", post: true, t: "×10의 거듭제곱 (과학적 표기)" }),
+      K("접선", "deriv", { sz: "k-small", t: "접선: x = □ 인 점의 접선과 기울기" }),
+    ],
+  },
   basic: {
-    name: "기본 함수",
+    name: "기본 함수", short: "함수",
     keys: [
       K(`${BOX}<sup>3</sup>`, "pow:3", { post: true, t: "세제곱" }), K(`∛${BOX}`, "cbrt", { t: "세제곱근" }),
       K(`<sup>${BOX}</sup>√${BOX}`, "root", { t: "거듭제곱근", sz: "k-small" }), K(`${BOX}<sup>−1</sup>`, "pow:-1", { post: true, t: "역수" }),
@@ -1563,12 +2171,17 @@ const FUNC_TABS = {
       K(`10<sup>${BOX}</sup>`, "tenpow", { t: "10의 거듭제곱" }), K(`e<sup>${BOX}</sup>`, "epow", { t: "e의 거듭제곱" }),
       K("log", "func:log", { t: "상용로그" }), K("ln", "func:ln", { t: "자연로그" }),
       K(`log<sub>${BOX}</sub>`, "logb", { t: "밑이 있는 로그", sz: "k-small" }),
-      K("π", "ch:π", { t: "원주율" }), K("<i>e</i>", "ch:e", { t: "자연상수" }), K(`|${BOX}|`, "abs", { t: "절댓값" }),
-      K("%", "ch:%", { post: true, t: "퍼센트" }), K(",", "ch:,", { t: "쉼표 (값 구분)" }),
+      // 계산기에서는 x (미분·적분 상자 안에 쓰는 변수), 그래프에서는 π (그래프에서는 숫자 줄에 x 가 있으므로)
+      K('<i class="kx">x</i>', "ch:x", { t: "변수 x (미분·적분 상자 안에서 사용)", g: { l: "π", a: "ch:π", t: "원주율" } }),
+      K("<i>e</i>", "ch:e", { t: "자연상수" }), K(`|${BOX}|`, "abs", { t: "절댓값" }),
+      // 미분: 계산기에서는 미분계수 d/dx(□)|x=□, 그래프에서는 도함수 d/dx(□)
+      K(`${DFRAC}|<sub>x=${BOX}</sub>`, "deriv", { t: "미분계수 (x = □ 에서의 기울기)",
+        g: { l: `${DFRAC}(${BOX})`, a: "deriv1", t: "도함수 (그래프로 그리기)" } }),
+      K(`∫<span class="klim">${BOX}${BOX}</span>`, "integ", { t: "정적분" }),
     ],
   },
   trig: {
-    name: "삼각함수",
+    name: "삼각함수", short: "삼각",
     keys: [
       K("sin", "func:sin"), K("cos", "func:cos"), K("tan", "func:tan"),
       K("sin<sup>−1</sup>", "func:asin", { sz: "k-small" }), K("cos<sup>−1</sup>", "func:acos", { sz: "k-small" }),
@@ -1580,11 +2193,24 @@ const FUNC_TABS = {
       K(",", "ch:,", { t: "쉼표 (값 구분)" }),
     ],
   },
+  // 문자 탭(맨 뒤에 보이도록 아래에서 순서를 옮김): 계수·상수로 쓰는 문자 (값은 아래 칸에서 따로 입력), ∇(그래디언트)
+  abc: {
+    name: "문자",
+    keys: [
+      K('<i class="kx">x</i>', "ch:x", { t: "문자 x" }), K('<i class="kx">y</i>', "ch:y", { t: "문자 y" }),
+      K('<i class="kx">z</i>', "lt:z", { t: "문자 z" }), K('<i class="kx">t</i>', "lt:t", { t: "문자 t" }),
+      K("∇", "grad", { t: "그래디언트 (기울기 벡터)", g: { l: '<i class="kx">s</i>', a: "lt:s", t: "문자 s" } }),
+      K('<i class="kx">a</i>', "lt:a"), K('<i class="kx">b</i>', "lt:b"), K('<i class="kx">c</i>', "lt:c"),
+      K('<i class="kx">d</i>', "lt:d"), K('<i class="kx">k</i>', "lt:k"),
+      K('<i class="kx">m</i>', "lt:m"), K('<i class="kx">n</i>', "lt:n"), K('<i class="kx">p</i>', "lt:p"),
+      K('<i class="kx">q</i>', "lt:q"), K('<i class="kx">r</i>', "lt:r"),
+    ],
+  },
   etc: {
-    name: "확률/기타",
+    name: "확률/기타", short: "기타",
     keys: [
       K(`<sub>${BOX}</sub>P<sub>${BOX}</sub>`, "npr", { t: "순열" }), K(`<sub>${BOX}</sub>C<sub>${BOX}</sub>`, "ncr", { t: "조합" }),
-      K("x!", "ch:!", { post: true, t: "계승" }), K("mod", "func2:mod", { sz: "k-small", t: "나머지" }),
+      K("%", "ch:%", { post: true, t: "퍼센트" }), K("mod", "func2:mod", { sz: "k-small", t: "나머지" }),
       K("gcd", "func2:gcd", { sz: "k-small", t: "최대공약수" }),
       K("lcm", "func2:lcm", { sz: "k-small", t: "최소공배수" }), K("내림", "func:floor", { sz: "k-small" }),
       K("올림", "func:ceil", { sz: "k-small" }), K("반올림", "func:round", { sz: "k-tiny" }), K(`|${BOX}|`, "abs", { t: "절댓값" }),
@@ -1594,19 +2220,23 @@ const FUNC_TABS = {
     ],
   },
 };
+// 문자 탭을 맨 뒤로
+{ const abc = FUNC_TABS.abc; delete FUNC_TABS.abc; FUNC_TABS.abc = abc; }
 // 자주 쓰는 수식 키 (탭과 상관없이 항상 보임)
 const PIN_KEYS = [
   { l: `<span class="kfrac">${BOX}${BOX}</span>`, a: "frac", c: "k-pin", post: true, t: "분수" },
   { l: `${BOX}<sup>2</sup>`, a: "pow:2", c: "k-pin", post: true, t: "제곱" },
   { l: `${BOX}<sup>${BOX}</sup>`, a: "pow", c: "k-pin", post: true, t: "거듭제곱" },
   { l: `√${BOX}`, a: "sqrt", c: "k-pin", t: "제곱근" },
-  { l: `×10<sup>${BOX}</sup>`, a: "sci", c: "k-pin", sz: "k-small", post: true, t: "×10의 거듭제곱 (과학적 표기)" },
+  { l: `×10<sup>${BOX}</sup>`, a: "sci", c: "k-pin", sz: "k-small", post: true, t: "×10의 거듭제곱 (과학적 표기)",
+    g: { l: "=", a: "ch:=", sz: "", post: false, t: "등호" } },                      // 그래프에서는 등호
 ];
 // 조작 키 줄
 const CTRL_KEYS = [
   { l: "◀", a: "left", c: "k-ctl", t: "커서 왼쪽" },
   { l: "▶", a: "right", c: "k-ctl", t: "커서 오른쪽 (빈칸에서 빠져나오기)" },
-  { l: "DEG", a: "deg", c: "k-ctl", sz: "k-small", t: "도/라디안 바꾸기" },
+  // 괄호 씌우기 (도/라디안은 계산 화면의 DEG 표시를 누르거나, 삼각함수 탭의 DEG 키로)
+  { l: `(${BOX})`, a: "wrap", c: "k-ctl", t: "괄호 씌우기: 누를 때마다 커서 앞의 식을 넓혀 가며 괄호로 감싸요" },
   { l: "⌫", a: "back", c: "k-ctl", t: "지우기 (누르고 있으면 계속 지움)" },
   { l: "AC", a: "clear", c: "k-ctl", t: "모두 지우기" },
 ];
@@ -1616,18 +2246,23 @@ const NUM_KEYS = [
   N("7", "ch:7", "k-num"), N("8", "ch:8", "k-num"), N("9", "ch:9", "k-num"), N("(", "par", "k-op", { t: "괄호 열기" }), N(")", "exit", "k-op", { t: "괄호(빈칸) 닫고 나오기" }),
   N("4", "ch:4", "k-num"), N("5", "ch:5", "k-num"), N("6", "ch:6", "k-num"), N("×", "ch:×", "k-op", { post: true }), N("÷", "ch:÷", "k-op", { post: true }),
   N("1", "ch:1", "k-num"), N("2", "ch:2", "k-num"), N("3", "ch:3", "k-num"), N("+", "ch:+", "k-op", { post: true }), N("−", "ch:-", "k-op", { post: true }),
-  N("0", "ch:0", "k-num"), N(".", "ch:.", "k-num", { t: "소수점" }), N("π", "ch:π", "k-num", { t: "원주율" }),
-  N("Ans", "ch:Ans", "k-fn", { sz: "k-small", t: "직전 결과" }), N("=", "eval", "k-eq", { t: "계산" }),
+  N("0", "ch:0", "k-num"), N(".", "ch:.", "k-num", { t: "소수점" }), N("π", "ch:π", "k-num", { t: "원주율",
+    g: { l: '<i class="kx">x</i>', a: "ch:x", c: "k-pin", t: "변수 x" } }),            // 그래프에서는 x 키
+  N("Ans", "ch:Ans", "k-fn", { sz: "k-small", t: "직전 결과",
+    g: { l: '<i class="kx">y</i>', a: "ch:y", c: "k-pin", sz: "", t: "변수 y" } }),        // 그래프에서는 y 키
+  N("=", "eval", "k-eq", { t: "계산",
+    g: { l: "+ 식", a: "gnew", sz: "k-small", t: "새 식 추가" } }),                          // 그래프에서는 새 식
 ];
 
 // 버튼 하나 만들기
-function makeKey(k, group) {
+function makeKey(k0, group) {
+  const k = state.mode === "graph" && k0.g ? Object.assign({}, k0, k0.g) : k0;   // 그래프용 모양이 있으면 그것으로
   const b = document.createElement("button");
   b.type = "button";
   b.className = `key ${k.c} ${k.sz || ""}`;
   b.dataset.group = group;
   b.dataset.act = k.a;
-  b.innerHTML = k.a === "deg" ? (state.deg ? "DEG" : "RAD") : `<span class="kl">${k.l}</span>`;
+  b.innerHTML = k.a === "deg" ? (angleDeg() ? "DEG" : "RAD") : `<span class="kl">${k.l}</span>`;
   b.setAttribute("aria-label", k.t || b.textContent);
   if (k.t) b.title = k.t;
   b._key = k;
@@ -1640,7 +2275,15 @@ function buildTabs() {
     t.type = "button"; t.className = "tab"; t.textContent = tab.name; t.dataset.tab = id;
     t.setAttribute("role", "tab");
     t.addEventListener("mousedown", (e) => e.preventDefault());       // 입력칸 초점 유지
-    t.addEventListener("click", () => { state.tab = id; renderFuncKeys(); });
+    t.addEventListener("click", () => {
+      if (state.mode === "graph" && isNarrow()) {
+        // 휴대폰 그래프: 접혀 있으면 펼치고, 펼친 탭을 다시 누르면 접음 (그래프를 크게 보기)
+        if (G.fold) { setFold(false); state.tab = id; }
+        else if (state.tab === id) setFold(true);
+        else state.tab = id;
+      } else state.tab = id;
+      renderFuncKeys();
+    });
     tabsEl.appendChild(t);
   });
 }
@@ -1650,12 +2293,20 @@ function renderFuncKeys() {
   const anchor = keysEl.querySelector('[data-group="pin"]');
   FUNC_TABS[state.tab].keys.forEach((k) => keysEl.insertBefore(makeKey(k, "fn"), anchor));
   tabsEl.querySelectorAll(".tab").forEach((t) => {
-    t.classList.toggle("on", t.dataset.tab === state.tab);
+    const tab = FUNC_TABS[t.dataset.tab];
+    t.style.display = tab.graphOnly && state.mode !== "graph" ? "none" : "";   // 그래프 전용 탭
+    t.textContent = state.mode === "graph" && tab.short ? tab.short : tab.name; // 그래프에서는 탭이 5개라 짧은 이름
+    t.classList.toggle("on", t.dataset.tab === state.tab && !(state.mode === "graph" && G.fold && isNarrow()));
     t.setAttribute("aria-selected", t.dataset.tab === state.tab);
   });
 }
 function buildKeys() {
   buildTabs();
+  rebuildKeys();
+}
+// 버튼 다시 만들기 (계산기 ↔ 그래프 전환 때)
+function rebuildKeys() {
+  keysEl.querySelectorAll(".key").forEach((b) => b.remove());
   PIN_KEYS.forEach((k) => keysEl.appendChild(makeKey(k, "pin")));
   CTRL_KEYS.forEach((k) => keysEl.appendChild(makeKey(k, "ctl")));
   NUM_KEYS.forEach((k) => keysEl.appendChild(makeKey(k, "num")));
@@ -1721,6 +2372,7 @@ document.addEventListener("keydown", (e) => {
     Enter: "eval", "=": "eval", Escape: "clear", Backspace: "back", ArrowLeft: "left", ArrowRight: "right",
     ArrowUp: "up", ArrowDown: "down", Home: "home", End: "end",
   };
+  if (state.mode === "graph" && "=<>".includes(e.key)) { e.preventDefault(); typeChar(e.key); return; }   // 그래프: 등호·부등호 입력
   if (keyMap[e.key]) { e.preventDefault(); act(keyMap[e.key]); return; }
   if (e.key === "Delete") { e.preventDefault(); if (moveRight()) backspaceCore(); refresh(); return; }
   if (e.key.length === 1) { e.preventDefault(); typeChar(e.key); }
@@ -1758,6 +2410,9 @@ sink.addEventListener("keydown", (e) => {
   else if (e.key === "Backspace" && sink.value === "") { e.preventDefault(); act("back"); }
 });
 if (IS_TOUCH) $("btnKbd").style.display = "inline-block";
+// 계산 화면 왼쪽 위 DEG/RAD 표시를 누르면 각도 단위 바꾸기
+$("modeBadge").addEventListener("mousedown", (e) => e.preventDefault());
+$("modeBadge").addEventListener("click", () => act("deg"));
 $("btnKbd").addEventListener("click", () => {
   state.nativeKbd = !state.nativeKbd;
   $("btnKbd").classList.toggle("on", state.nativeKbd);
@@ -1768,12 +2423,18 @@ $("btnKbd").addEventListener("click", () => {
    11. 계산 기록
    ===================================================================== */
 function addHistory(src, v) {
-  const f = formatNumber(v);
+  const f = v.vec
+    ? { plain: `(${v.vec.map((q) => formatNumber(q).plain).join(", ")})`, insert: null, html: `(${v.vec.map((q) => formatNumber(q).html).join(", ")})` }
+    : formatNumber(v);
+  // 식에 쓴 문자와 그 값 (예: m = 2, v = 3)
+  let used = [];
+  try { used = [...freeVars(new Parser(tokenize(src), false).parseAll())].sort(); } catch (e) { used = []; }
   const entry = {
+    params: used.map((n) => `${n} = ${paramText(PV[n])}`).join(", "),
     no: ++historyNo,
     time: new Date(),
     expr: src,
-    value: cleanNumber(v),
+    value: v.vec ? null : cleanNumber(v),
     resultText: f.plain,
     insert: f.insert,
     html: f.html,
@@ -1796,7 +2457,7 @@ function addHistory(src, v) {
 function saveToServer(entry) {
   if (typeof google !== "undefined" && google.script && google.script.run) {
     google.script.run.withFailureHandler(() => {}).saveCalcRecord({
-      expr: entry.expr, result: entry.resultText, mode: entry.mode,
+      expr: entry.expr, result: entry.resultText, mode: entry.mode, params: entry.params,
     });
   }
 }
@@ -1820,7 +2481,7 @@ function renderHistory() {
   hListEl.innerHTML = history.slice().reverse().map((h) => {
     const exprHtml = renderStatic(h.tree);   // 입력했던 모양 그대로
     return `<li class="h-item" data-no="${h.no}">
-      <span class="h-meta">#${h.no} · ${timeStr(h.time)} · ${h.mode}</span>
+      <span class="h-meta">#${h.no} · ${timeStr(h.time)} · ${h.mode}${h.params ? " · " + esc(h.params) : ""}</span>
       <button class="h-expr" type="button" data-do="load" title="이 식 다시 불러오기">${exprHtml}</button>
       <button class="h-res" type="button" data-do="use" title="이 결과를 입력에 넣기">= ${h.html}</button>
       <button class="h-del" type="button" data-do="del" aria-label="이 기록 지우기">×</button>
@@ -1843,6 +2504,7 @@ hListEl.addEventListener("click", (e) => {
     refresh();
     closeHistorySheet();
   } else if (b.dataset.do === "use") {              // 결과를 지금 식에 넣기
+    if (h.value === null) { toast("벡터(∇) 결과는 식에 넣을 수 없어요"); return; }
     startAfterResult(false);
     insertItems(numberToItems(h.value));
     refresh();
@@ -1857,7 +2519,7 @@ hListEl.addEventListener("click", (e) => {
 // 전체 복사
 $("btnCopy").addEventListener("click", () => {
   if (!history.length) { toast("복사할 기록이 없어요"); return; }
-  const text = history.map((h) => `${h.no}. ${h.expr} = ${h.resultText}`).join("\n");
+  const text = history.map((h) => `${h.no}. ${h.expr} = ${h.resultText}${h.params ? "  (" + h.params + ")" : ""}`).join("\n");
   copyText(text).then(() => toast("기록을 복사했어요"), () => toast("복사하지 못했어요"));
 });
 function copyText(text) {
@@ -1875,8 +2537,8 @@ function copyText(text) {
 $("btnCsv").addEventListener("click", () => {
   if (!history.length) { toast("저장할 기록이 없어요"); return; }
   const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
-  const rows = [["번호", "시각", "수식", "결과", "각도"]].concat(
-    history.map((h) => [h.no, timeStr(h.time), h.expr, h.resultText, h.mode]));
+  const rows = [["번호", "시각", "수식", "결과", "각도", "문자 값"]].concat(
+    history.map((h) => [h.no, timeStr(h.time), h.expr, h.resultText, h.mode, h.params || ""]));
   const csv = "﻿" + rows.map((r) => r.map(q).join(",")).join("\r\n");
   const d = new Date(), p = (n) => String(n).padStart(2, "0");
   const name = `계산기록_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.csv`;
@@ -1926,6 +2588,7 @@ function applyTheme(id) {
   document.querySelector('meta[name="theme-color"]').setAttribute("content", bg);
   document.querySelectorAll(".theme-opt").forEach((o) => o.classList.toggle("on", o.dataset.id === id));
   try { localStorage.setItem("sci-calc-theme", id); } catch (e) { /* 저장 못 해도 괜찮음 */ }
+  if (state.mode === "graph") scheduleDraw();     // 그래프 색도 테마에 맞게
 }
 function buildThemeMenu() {
   const menu = $("themeMenu");
@@ -1945,10 +2608,1101 @@ document.addEventListener("click", (e) => { if (!e.target.closest("#themeMenu") 
    13. 알림 메시지
    ===================================================================== */
 let toastTimer = null;
-function toast(msg) {
+function toast(msg, ms) {
   const t = $("toast");
   t.textContent = msg; t.classList.add("show");
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 1600);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), ms || 1600);
+}
+
+/* =====================================================================
+   15. 그래프
+   - 함수 y = f(x) 를 최대 6개까지 색을 달리해 그림
+   - 식 입력은 계산기와 같은 교과서식 입력기를 그대로 사용 (변수 x 추가)
+   - 끌어서 이동, 두 손가락·휠·버튼으로 확대/축소, 곡선을 누르면 좌표 표시
+   ===================================================================== */
+const PALETTE = ["#e03131", "#1c7ed6", "#2f9e44", "#f08c00", "#9c36b5", "#0c8599"];  // 함수 색
+const G = {
+  fns: [],          // 함수 목록 { id, color, tree(식 구조), visible, ast(계산용 구조), err }
+  active: 0,        // 지금 입력 중인 함수 번호
+  cx: 0, cy: 0,     // 화면 가운데의 좌표
+  ppu: 0,           // 1 단위가 몇 픽셀인지 (확대 정도)
+  deg: false,       // 그래프의 각도 단위 (기본: 라디안)
+  piTicks: false,   // x축 눈금을 π 단위로
+  trace: null,      // 좌표를 보여 줄 점 { id(함수), x }
+  kbdHidden: false, // 휴대폰에서 키패드 숨김
+  fold: undefined,  // 휴대폰에서 함수 키 줄 접음
+  tanOn: false,     // 좌표를 볼 때 접선도 보여 주기
+};
+let fnSeq = 0;
+let calcSaved = null;              // 그래프로 넘어갈 때 계산기 식을 보관
+const appEl = document.querySelector(".app");
+const graphEl = $("graph"), canvas = $("gCanvas"), fListEl = $("fList");
+state.mode = "calc";
+
+/* ---------- 함수 목록 ---------- */
+function newFn() {
+  const used = G.fns.map((f) => f.color);
+  const color = PALETTE.find((c) => !used.includes(c)) || PALETTE[fnSeq % PALETTE.length];
+  return { id: ++fnSeq, color, tree: mkRow(null), visible: true, ast: null, err: "" };
+}
+
+/* ---------- 식 해석: 등호·부등호로 나누고 그래프 종류 정하기 ----------
+   종류(kind)
+   - yfx : y = (x 식)  … 등호가 없으면 이것으로 봄 (예: x²  →  y = x²)
+   - xfy : x = (y 식)  … 세로선 x = 3, 옆으로 누운 포물선 x = y²
+   - imp : 그 밖의 x, y 식 (원 x²+y²=4 등) → 왼쪽 − 오른쪽 = 0 인 곳을 찾아 그림
+   부등호(< > ≤ ≥)면 영역을 색칠하고, < > 는 경계선을 점선으로 그림 */
+const FLIP = { "=": "=", "<": ">", ">": "<", "≤": "≥", "≥": "≤" };     // 양쪽을 바꿀 때 부등호 방향
+// y = f(x) 꼴로 그리는 종류들 (area: 정적분 넓이, tangent: 접선)
+const isYK = (k) => k === "yfx" || k === "area" || k === "tangent";
+/* 식 전체가 정적분 하나(끝값에 x 없음) → 곡선 + 그 구간 넓이 색칠
+   식 전체가 미분계수 하나(x = 값)      → 곡선 + 그 점의 접선 */
+function compileSpecial(f, n) {
+  if (varText(n) !== "x") return false;            // 변수가 x 가 아니면(예: dt) 보통 식으로 그림
+  const body = parsePart(n.body);
+  if (usesVar(body, "y")) return false;
+  useParams(f, body);
+  const ctx = { deg: G.deg, ans: state.ans, _p: PV, graph: true };
+  const F = (t) => evaluate(body, Object.assign({}, ctx, { x: t }));
+  if (n.t === "integ") {
+    const lo = parsePart(n.lo), hi = parsePart(n.hi);
+    if ([lo, hi].some((q) => usesVar(q, "x") || usesVar(q, "y"))) return false;   // 끝값에 x 가 있으면 보통 식(적분함수)으로
+    useParams(f, lo); useParams(f, hi);
+    const a = evaluate(lo, ctx), b = evaluate(hi, ctx);
+    f.kind = "area"; f.ast = body; f.area = { a, b, value: numInteg(F, a, b) };
+    return true;
+  }
+  const at = parsePart(n.at);
+  if (usesVar(at, "x") || usesVar(at, "y")) return false;
+  useParams(f, at);
+  const a = evaluate(at, ctx);
+  const fa = F(a);
+  if (!Number.isFinite(fa)) throw new CalcError("이 점에서는 함수값이 없어요");
+  f.kind = "tangent"; f.ast = body; f.tan = { a, fa, m: numDiff(F, a) };
+  return true;
+}
+// 식에 쓴 문자(x, y 말고)를 모으고, 처음 보는 문자는 값 1 로 시작
+function useParams(f, ast) {
+  freeVars(ast).forEach((n) => {
+    if (n === "x" || n === "y") return;
+    f.params.add(n);
+    ensureParam(n, 1);
+  });
+}
+// 미분 상자 안에 y 가 있는지 (d/dx 안의 y 는 상수로 계산됨을 알려 주려고)
+function derivHasY(row) {
+  return row.some((it) => isNode(it) && (((it.t === "deriv" || it.t === "deriv1") && !hasLetter(it.v, "y") && hasVarY(it.body)) || slotRows(it).some(derivHasY)));
+}
+// 상자(분수, 괄호 등) 안에 등호·부등호가 있는지
+function relInside(row) {
+  return row.some((it) => isNode(it) && slotRows(it).some((r) => r.some(isRel) || relInside(r)));
+}
+// 계산용 구조 안에 변수(x 또는 y)가 쓰였는지
+function usesVar(node, name) {
+  if (!node || typeof node !== "object") return false;
+  if (node.type === "var") return node.name === name;
+  return Object.values(node).some((v) =>
+    Array.isArray(v) ? v.some((c) => usesVar(c, name)) : (v && typeof v === "object" && v.type ? usesVar(v, name) : false));
+}
+// 줄 하나(등호 한쪽)를 계산용 구조로
+function parsePart(row) {
+  const src = serialize(row);
+  const ast = new Parser(tokenize(src), false).parseAll();
+  if (src.includes("□")) throw new CalcError("빈칸(□)을 채우면 그래프가 그려져요");
+  return ast;
+}
+const isSingle = (row, v) => row.length === 1 && !isNode(row[0]) && row[0].v === v;
+
+function compileFn(f) {
+  f.ast = null; f.err = ""; f.kind = null; f.op = "="; f.params = new Set();
+  const t = f.tree;
+  f.hasRel = t.some(isRel);            // 등호가 없으면 줄 앞에 흐리게 "y =" 를 보여 줌
+  if (!t.length) return;
+  try {
+    if (relInside(t)) throw new CalcError("등호·부등호는 괄호나 분수 밖에 써 주세요");
+    const at = t.map((it, i) => (isRel(it) ? i : -1)).filter((i) => i >= 0);
+    if (at.length > 1) throw new CalcError("등호·부등호는 한 번만 쓸 수 있어요");
+    if (at.length === 0) {                                   // 등호 없음 → y = (식)
+      if (t.length === 1 && (t[0].t === "integ" || t[0].t === "deriv") && compileSpecial(f, t[0])) return;
+      const ast = parsePart(t);
+      if (usesVar(ast, "y")) throw new CalcError("y 가 들어 있으면 등호(=)나 부등호를 넣어 주세요");
+      useParams(f, ast);
+      f.kind = "yfx"; f.ast = ast; return;
+    }
+    const k = at[0], op = t[k].v;
+    const L = t.slice(0, k), R = t.slice(k + 1);
+    if (!L.length || !R.length) throw new CalcError(`${op} 양쪽에 식을 써 주세요`);
+    const pl = parsePart(L), pr = parsePart(R);
+    if (![pl, pr].some((a) => usesVar(a, "x") || usesVar(a, "y"))) throw new CalcError("x 나 y 가 들어간 식을 써 주세요");
+    useParams(f, pl); useParams(f, pr);
+    f.op = op;
+    if (isSingle(L, "y") && !usesVar(pr, "y")) { f.kind = "yfx"; f.ast = pr; }
+    else if (isSingle(R, "y") && !usesVar(pl, "y")) { f.kind = "yfx"; f.ast = pl; f.op = FLIP[op]; }
+    else if (isSingle(L, "x") && !usesVar(pr, "x")) { f.kind = "xfy"; f.ast = pr; }
+    else if (isSingle(R, "x") && !usesVar(pl, "x")) { f.kind = "xfy"; f.ast = pl; f.op = FLIP[op]; }
+    else { f.kind = "imp"; f.ast = { type: "bin", op: "-", l: pl, r: pr }; }   // 왼쪽 − 오른쪽
+    if (derivHasY(t)) f.err = "참고: d/dx 안의 y 는 상수로 보고 계산했어요 (편미분)";
+  } catch (e) {
+    f.ast = null; f.kind = null;
+    f.err = e instanceof CalcError ? e.message : "식 모양이 올바르지 않아요";
+  }
+}
+// (x, y) 에서 식의 값 (정의되지 않으면 NaN)
+function evalXY(ast, x, y) {
+  try {
+    const v = evaluate(ast, { deg: G.deg, ans: state.ans, x, y, _p: PV, graph: true });
+    return Number.isFinite(v) ? v : NaN;
+  } catch (e) { return NaN; }
+}
+
+// 줄 앞 표시: 등호 없이 x 식만 쓰면 "y =" 를 흐리게 보여 줌 (y = 그 식으로 그린다는 뜻)
+function yLabel(f) {
+  if (f.kind === "area" || f.kind === "tangent") return "";             // 넓이·접선 식은 "y =" 없이
+  return f.tree.length && !f.hasRel && !hasVarY(f.tree) ? "<i>y</i> =" : "";
+}
+// 줄 안 어디에든 y 가 있는지 (상자 안까지)
+function hasVarY(row) { return row.some((it) => (isNode(it) ? slotRows(it).some(hasVarY) : it.v === "y")); }
+// 함수 목록 그리기 (입력 중인 줄에는 입력칸을 옮겨 넣음)
+function renderFnList() {
+  fListEl.innerHTML = "";
+  G.fns.forEach((f, i) => {
+    const row = document.createElement("div");
+    row.className = "f-row" + (i === G.active ? " on" : "");
+    row.dataset.i = i;
+    row.style.setProperty("--c", f.color);
+    row.innerHTML = `<button class="f-dot${f.visible ? "" : " off"}" type="button" data-f="vis" title="그래프 보이기/숨기기" aria-label="그래프 보이기/숨기기"></button>
+      <span class="f-y">${yLabel(f)}</span>
+      <div class="f-expr"></div>
+      <button class="f-del" type="button" data-f="del" title="이 식 지우기" aria-label="이 식 지우기">×</button>
+      <div class="f-err">${esc(f.err)}</div>`;
+    const ex = row.querySelector(".f-expr");
+    if (i === G.active) ex.appendChild(editorEl);
+    else ex.innerHTML = f.tree.length ? renderStatic(f.tree) : '<span class="f-empty">눌러서 식 입력</span>';
+    fListEl.appendChild(row);
+  });
+  // 입력 중인 줄이 목록 안에서 보이도록 스크롤
+  const on = fListEl.querySelector(".f-row.on");
+  if (on) {
+    if (on.offsetTop < fListEl.scrollTop) fListEl.scrollTop = on.offsetTop - 3;
+    else if (on.offsetTop + on.offsetHeight > fListEl.scrollTop + fListEl.clientHeight) fListEl.scrollTop = on.offsetTop + on.offsetHeight - fListEl.clientHeight + 3;
+  }
+  $("btnAddFn").disabled = G.fns.length >= PALETTE.length;
+  renderLegend();
+}
+// 휴대폰에서는 입력 중인 식 한 줄만 보이므로, 모든 식을 그래프 왼쪽 위에 작게 보여 줌 (누르면 그 식 고치기)
+const legendEl = $("gLegend");
+function renderLegend() {
+  const items = G.fns.map((f, i) => ({ f, i })).filter(({ f }) => f.tree.length);
+  legendEl.hidden = items.length < 2;
+  legendEl.innerHTML = legendEl.hidden ? "" : items.map(({ f, i }) =>
+    `<button type="button" class="g-leg${i === G.active ? " on" : ""}${f.visible ? "" : " off"}" data-i="${i}" style="--c:${f.color}">` +
+    `<i></i><span class="tx">${yLabel(f) ? "<em>y</em> = " : ""}${renderStatic(f.tree)}</span></button>`).join("");
+}
+legendEl.addEventListener("mousedown", (e) => e.preventDefault());
+legendEl.addEventListener("click", (e) => {
+  const b = e.target.closest(".g-leg");
+  if (!b) return;
+  if (+b.dataset.i !== G.active) activateFn(+b.dataset.i);
+  if (G.kbdHidden) setKbdHidden(false);
+});
+// 휴대폰 그래프: 함수 키 3줄 접기/펴기
+function isNarrow() { return window.matchMedia("(max-width: 899.98px)").matches; }
+function setFold(v) { G.fold = v; appEl.classList.toggle("fn-fold", v); }
+
+// 다른 함수 줄로 옮겨 가서 입력하기
+function activateFn(i) {
+  G.fns[G.active].tree = root;
+  G.active = i;
+  root = G.fns[i].tree;
+  cur = { row: root, idx: root.length };
+  renderFnList();
+  refresh();
+}
+// 새 식 추가 (빈 줄이 있으면 그 줄로)
+function addFn() {
+  G.fns[G.active].tree = root;
+  const empty = G.fns.findIndex((f) => f.tree.length === 0);
+  if (empty >= 0) { activateFn(empty); return; }
+  if (G.fns.length >= PALETTE.length) { toast(`식은 ${PALETTE.length}개까지 그릴 수 있어요`); return; }
+  G.fns.push(newFn());
+  activateFn(G.fns.length - 1);
+  fListEl.scrollTop = fListEl.scrollHeight;
+}
+// 식 지우기 (하나만 남았으면 내용만 비움)
+function deleteFn(i) {
+  G.fns[G.active].tree = root;
+  if (G.trace && G.trace.id === G.fns[i].id) G.trace = null;
+  if (G.fns.length === 1) {
+    G.fns[0].tree = mkRow(null);
+  } else {
+    G.fns.splice(i, 1);
+    if (G.active > i || G.active >= G.fns.length) G.active = Math.max(0, G.active - 1);
+  }
+  root = G.fns[G.active].tree;
+  cur = { row: root, idx: root.length };
+  renderFnList();
+  refresh();
+}
+
+fListEl.addEventListener("mousedown", (e) => { if (e.target.closest("button")) e.preventDefault(); });
+fListEl.addEventListener("click", (e) => {
+  const rowEl = e.target.closest(".f-row");
+  if (!rowEl) return;
+  const i = +rowEl.dataset.i, btn = e.target.closest("button[data-f]");
+  if (btn && btn.dataset.f === "vis") { G.fns[i].visible = !G.fns[i].visible; renderFnList(); scheduleDraw(); return; }
+  if (btn && btn.dataset.f === "del") { deleteFn(i); return; }
+  if (i !== G.active) activateFn(i);
+  if (G.kbdHidden) setKbdHidden(false);          // 식을 누르면 키패드 다시 보이기
+});
+$("btnAddFn").addEventListener("click", () => act("gnew"));
+$("btnAddFn").addEventListener("mousedown", (e) => e.preventDefault());
+
+// 휴대폰: 그래프를 크게 보려고 키패드 숨기기
+function setKbdHidden(h) {
+  G.kbdHidden = h;
+  appEl.classList.toggle("kbd-hidden", h);
+  $("btnKeysToggle").textContent = h ? "키패드 ▴" : "키패드 ▾";
+}
+$("btnKeysToggle").addEventListener("click", () => setKbdHidden(!G.kbdHidden));
+
+/* ---------- 계산기 ↔ 그래프 전환 ---------- */
+function setMode(m) {
+  if (state.mode === m) return;
+  // 문자 값 칸에 초점이 남아 있으면 풀기 (안 보이는 칸으로 키보드 글자가 들어가지 않게)
+  if (document.activeElement && document.activeElement.classList.contains("p-val")) document.activeElement.blur();
+  if (m === "graph") {
+    calcSaved = { root, cur };
+    state.justEvaluated = false;
+    closeHistorySheet();
+    if (!G.fns.length) G.fns.push(newFn());
+    state.mode = "graph";
+    root = G.fns[G.active].tree;
+    cur = { row: root, idx: root.length };
+  } else {
+    G.fns[G.active].tree = root;
+    state.mode = "calc";
+    root = calcSaved.root; cur = calcSaved.cur;
+    resultEl.parentNode.insertBefore(editorEl, resultEl);      // 입력칸을 계산 화면으로 되돌리기
+  }
+  appEl.dataset.mode = m;
+  document.querySelectorAll(".mode-seg button").forEach((b) => {
+    b.classList.toggle("on", b.dataset.mode === m);
+    b.setAttribute("aria-selected", b.dataset.mode === m);
+  });
+  // 그래프에 들어가면 '부등호' 탭(x, y, =)을 먼저, 계산기로 오면 '기본 함수' 탭
+  if (m === "graph") {
+    state.tab = "rel";
+    if (G.fold === undefined) setFold(window.innerHeight < 760);   // 처음 들어올 때: 세로가 짧은 휴대폰이면 함수 줄을 접어 둠
+  }
+  else if (FUNC_TABS[state.tab].graphOnly) state.tab = "basic";
+  rebuildKeys();        // = 키 → '+ 식', π 키 → x 키, Ans 키 → y 키, ×10ⁿ 키 → = 키
+  updateDegLabels();
+  if (m === "graph") { G.fns.forEach((f) => { if (f !== G.fns[G.active]) compileFn(f); }); renderFnList(); }
+  refresh();
+  if (m === "graph") resizeCanvas();
+}
+document.querySelectorAll(".mode-seg button").forEach((b) => {
+  b.addEventListener("mousedown", (e) => e.preventDefault());
+  b.addEventListener("click", () => setMode(b.dataset.mode));
+});
+
+/* ---------- 좌표 변환 (수학 좌표 ↔ 화면 픽셀) ---------- */
+let gW = 0, gH = 0, dpr = 1;
+const toPx = (x) => gW / 2 + (x - G.cx) * G.ppu;
+const toPy = (y) => gH / 2 - (y - G.cy) * G.ppu;
+const fromPx = (px) => G.cx + (px - gW / 2) / G.ppu;
+const fromPy = (py) => G.cy - (py - gH / 2) / G.ppu;
+const clampPpu = (v) => Math.min(1e7, Math.max(1e-6, v));
+
+// 그리는 영역 크기가 바뀌면 캔버스 해상도 맞추기 (선명하게)
+function resizeCanvas() {
+  const r = graphEl.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  dpr = window.devicePixelRatio || 1;
+  gW = r.width; gH = r.height;
+  canvas.width = Math.round(gW * dpr);
+  canvas.height = Math.round(gH * dpr);
+  if (!G.ppu) homeView();
+  draw();
+}
+if (window.ResizeObserver) new ResizeObserver(() => { if (state.mode === "graph") resizeCanvas(); }).observe(graphEl);
+window.addEventListener("resize", () => { if (state.mode === "graph") resizeCanvas(); });
+
+// 처음 화면: 원점이 가운데, x 는 대략 -10 ~ 10
+function homeView() {
+  G.cx = 0; G.cy = 0;
+  G.ppu = Math.max(4, Math.min(gW / 20, gH / 12));
+  scheduleDraw();
+}
+// (px, py) 지점을 중심으로 k 배 확대
+function zoomAt(px, py, k) {
+  const wx = fromPx(px), wy = fromPy(py);
+  G.ppu = clampPpu(G.ppu * k);
+  G.cx = wx - (px - gW / 2) / G.ppu;
+  G.cy = wy + (py - gH / 2) / G.ppu;
+  scheduleDraw();
+}
+
+/* ---------- 눈금 간격과 글자 ---------- */
+// 보기 좋은 간격 (1, 2, 5, 10, 20, 50 …)
+function niceStep(raw) {
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const m = raw / p;
+  const n = m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10;
+  return { step: n * p, minor: n === 2 ? (n * p) / 4 : (n * p) / 5 };
+}
+// π 단위 간격 (π/12, π/6, π/4, π/2, π, 2π …)
+function piStep(raw) {
+  const ks = [1 / 12, 1 / 6, 1 / 4, 1 / 2, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024];
+  const k = ks.find((q) => q * Math.PI >= raw) || ks[ks.length - 1];
+  return { step: k * Math.PI, minor: (k * Math.PI) / 2 };
+}
+const SUP = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
+const toSup = (s) => String(s).split("").map((c) => SUP[c] || c).join("");
+// 눈금 숫자 글자
+function tickLabel(v, step) {
+  if (Math.abs(v) < Math.abs(step) * 1e-6) return "0";
+  const a = Math.abs(step);
+  if (a >= 1e6 || a < 1e-4) {
+    const e = Math.floor(Math.log10(Math.abs(v)));
+    const m = Number((v / Math.pow(10, e)).toPrecision(3));
+    return `${m === 1 ? "" : m === -1 ? "−" : String(m).replace("-", "−") + "×"}10${toSup(e)}`;
+  }
+  const dec = Math.max(0, -Math.floor(Math.log10(a) + 1e-9));
+  return v.toFixed(dec).replace("-", "−");
+}
+// π 눈금 글자 (예: π/2, 3π/4, −2π)
+function piLabel(v) {
+  const f = v / Math.PI;
+  for (const d of [1, 2, 3, 4, 6, 12]) {
+    const n = Math.round(f * d);
+    if (Math.abs(f * d - n) < 1e-6) {
+      const g = gcd2(n, d), nn = n / g, dd = d / g;
+      if (nn === 0) return "0";
+      const sign = nn < 0 ? "−" : "", an = Math.abs(nn);
+      return `${sign}${an === 1 ? "" : an}π${dd > 1 ? "/" + dd : ""}`;
+    }
+  }
+  return tickLabel(v, 0.1);
+}
+// 좌표값 글자 (추적 점 표시용, 5자리)
+function coordText(v) {
+  if (!Number.isFinite(v)) return "정의되지 않음";
+  if (Math.abs(v) < 1e-10) return "0";
+  const a = Math.abs(v);
+  const s = a >= 1e6 || a < 1e-4 ? v.toExponential(3).replace(/\.?0+e/, "e") : String(Number(v.toPrecision(5)));
+  return s.replace("-", "−");
+}
+
+/* ---------- 그리기 ---------- */
+let drawPending = false;
+function scheduleDraw() {
+  if (drawPending) return;
+  drawPending = true;
+  requestAnimationFrame(() => { drawPending = false; draw(); });
+}
+const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function draw() {
+  if (state.mode !== "graph" || !gW) return;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const bg = cssVar("--panel-bg"), fg = cssVar("--panel-fg"), lineC = cssVar("--line"), muted = cssVar("--muted");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, gW, gH);
+
+  const xmin = fromPx(0), xmax = fromPx(gW), ymin = fromPy(gH), ymax = fromPy(0);
+  const usePi = G.piTicks && !G.deg;
+  const xs = usePi ? piStep(80 / G.ppu) : niceStep(80 / G.ppu);
+  const ys = niceStep(70 / G.ppu);
+
+  // 격자선 그리기 도우미
+  const grid = (sx, sy) => {
+    ctx.beginPath();
+    for (let k = Math.ceil(xmin / sx); k * sx <= xmax; k++) { const p = Math.round(toPx(k * sx)) + 0.5; ctx.moveTo(p, 0); ctx.lineTo(p, gH); }
+    for (let k = Math.ceil(ymin / sy); k * sy <= ymax; k++) { const p = Math.round(toPy(k * sy)) + 0.5; ctx.moveTo(0, p); ctx.lineTo(gW, p); }
+    ctx.stroke();
+  };
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = lineC;
+  ctx.globalAlpha = 0.45; grid(xs.minor, ys.minor);     // 잔 격자
+  ctx.globalAlpha = 1;    grid(xs.step, ys.step);       // 큰 격자
+
+  // x축, y축
+  const axY = toPy(0), axX = toPx(0);
+  ctx.strokeStyle = fg; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  if (axY >= 0 && axY <= gH) { ctx.moveTo(0, Math.round(axY) + 0.5); ctx.lineTo(gW, Math.round(axY) + 0.5); }
+  if (axX >= 0 && axX <= gW) { ctx.moveTo(Math.round(axX) + 0.5, 0); ctx.lineTo(Math.round(axX) + 0.5, gH); }
+  ctx.stroke();
+
+  // 눈금 숫자 (축이 화면 밖이면 가장자리에)
+  ctx.font = "12px system-ui, -apple-system, 'Malgun Gothic', sans-serif";
+  ctx.lineWidth = 3; ctx.strokeStyle = bg; ctx.fillStyle = muted;   // 숫자 뒤에 바탕색 테두리 → 선과 겹쳐도 잘 보임
+  const label = (t, x, y) => { ctx.strokeText(t, x, y); ctx.fillText(t, x, y); };
+  const ly = Math.min(Math.max(axY + 4, 4), gH - 18);
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  for (let k = Math.ceil(xmin / xs.step); k * xs.step <= xmax; k++) {
+    if (k === 0) continue;
+    const v = k * xs.step, px = toPx(v);
+    if (px < 12 || px > gW - 12) continue;
+    label(usePi ? piLabel(v) : tickLabel(v, xs.step), px, ly);
+  }
+  let lx, align;
+  if (axX < 40) { lx = Math.max(axX, 0) + 5; align = "left"; }
+  else if (axX > gW) { lx = gW - 5; align = "right"; }
+  else { lx = axX - 5; align = "right"; }
+  ctx.textAlign = align; ctx.textBaseline = "middle";
+  for (let k = Math.ceil(ymin / ys.step); k * ys.step <= ymax; k++) {
+    if (k === 0) continue;
+    const v = k * ys.step, py = toPy(v);
+    if (py < 10 || py > gH - 10) continue;
+    label(tickLabel(v, ys.step), lx, py);
+  }
+  if (axX >= 0 && axX <= gW && axY >= 0 && axY <= gH) { ctx.textAlign = "right"; ctx.textBaseline = "top"; label("0", axX - 4, axY + 4); }
+
+  // 곡선 (입력 중인 함수는 조금 굵게, 맨 위에)
+  G.fns.forEach((f, i) => { if (i !== G.active && f.visible && f.ast) drawFn(ctx, f, false); });
+  const af = G.fns[G.active];
+  if (af && af.visible && af.ast) drawFn(ctx, af, true);
+
+  // 정적분 값, 접선 기울기 이름표
+  G.fns.forEach((f) => { if (f.visible && f.ast) calcLabel(ctx, f); });
+  // 좌표 추적 점
+  drawTrace(ctx, bg, axX, axY);
+
+  // 아직 그릴 식이 없을 때 안내
+  if (!G.fns.some((f) => f.ast && f.visible)) {
+    ctx.font = "14px system-ui, -apple-system, 'Malgun Gothic', sans-serif";
+    ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillStyle = muted;
+    ctx.fillText("아래에 식을 입력하면 그래프가 그려져요", 12, gH - 12);
+  }
+}
+
+// 함수 하나 그리기 (종류에 따라 나눠서)
+function drawFn(ctx, f, active) {
+  const ineq = f.op !== "=";                       // 부등식이면 영역 색칠
+  const dashed = f.op === "<" || f.op === ">";     // 등호가 없는 부등호는 경계선을 점선으로
+  const lw = active ? 3 : 2.2;
+  if (isYK(f.kind)) {
+    if (f.kind === "area") fillArea(ctx, f);               // 정적분: 구간 넓이 색칠
+    if (ineq) fillY(ctx, f);
+    curveY(ctx, f, lw, dashed);
+    if (f.kind === "tangent") {                             // 미분계수: 접선 + 접점
+      tangentLine(ctx, f.color, f.tan.a, f.tan.fa, f.tan.m);
+      dotAt(ctx, f.color, f.tan.a, f.tan.fa);
+    }
+  }
+  else if (f.kind === "xfy") { if (ineq) fillX(ctx, f); curveX(ctx, f, lw, dashed); }
+  else implicitDraw(ctx, f, lw, dashed, ineq);
+}
+// 정적분 넓이: 곡선과 x축 사이를 a ~ b 구간만 색칠하고, 구간 끝에 세로 점선
+function fillArea(ctx, f) {
+  const lo = Math.min(f.area.a, f.area.b), hi = Math.max(f.area.a, f.area.b);
+  const ay = Math.max(-10, Math.min(gH + 10, toPy(0)));
+  const p0 = Math.max(0, Math.floor(toPx(lo))), p1 = Math.min(gW, Math.ceil(toPx(hi)));
+  ctx.save(); ctx.fillStyle = f.color; ctx.globalAlpha = 0.28; ctx.beginPath();
+  for (let px = p0; px < p1; px++) {
+    const x = Math.min(hi, Math.max(lo, fromPx(px + 0.5)));
+    const y = evalXY(f.ast, x);
+    if (Number.isNaN(y)) continue;
+    const py = Math.max(-10, Math.min(gH + 10, toPy(y)));
+    ctx.rect(px, Math.min(py, ay), 1.5, Math.abs(py - ay));
+  }
+  ctx.fill();
+  ctx.globalAlpha = 0.85; ctx.setLineDash([4, 4]); ctx.strokeStyle = f.color; ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  [lo, hi].forEach((v) => {
+    const y = evalXY(f.ast, v);
+    if (Number.isFinite(y)) { ctx.moveTo(toPx(v), ay); ctx.lineTo(toPx(v), Math.max(-10, Math.min(gH + 10, toPy(y)))); }
+  });
+  ctx.stroke(); ctx.restore();
+}
+// 접선: (x0, y0) 를 지나고 기울기 m 인 직선 (m 이 무한대면 세로선)
+function tangentLine(ctx, color, x0, y0, m) {
+  const C = (v) => Math.max(-1e5, Math.min(1e5, v));
+  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.globalAlpha = 0.9; ctx.setLineDash([10, 5]);
+  ctx.beginPath();
+  if (Number.isFinite(m)) {
+    const xa = fromPx(0), xb = fromPx(gW);
+    ctx.moveTo(0, C(toPy(y0 + m * (xa - x0)))); ctx.lineTo(gW, C(toPy(y0 + m * (xb - x0))));
+  } else { ctx.moveTo(toPx(x0), 0); ctx.lineTo(toPx(x0), gH); }
+  ctx.stroke(); ctx.restore();
+}
+// 점 찍기
+function dotAt(ctx, color, x, y) {
+  ctx.save(); ctx.beginPath(); ctx.arc(toPx(x), toPy(y), 5.5, 0, Math.PI * 2);
+  ctx.fillStyle = color; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = cssVar("--panel-bg"); ctx.stroke(); ctx.restore();
+}
+// 그래프 위 작은 이름표 (정적분 값, 기울기)
+function tag(ctx, text, x, y, color) {
+  ctx.save();
+  ctx.font = "bold 13px system-ui, -apple-system, 'Malgun Gothic', sans-serif";
+  const w = ctx.measureText(text).width + 16, h = 24;
+  const lx = Math.min(Math.max(x - w / 2, 4), gW - w - 4), ly = Math.min(Math.max(y - h / 2, 4), gH - h - 4);
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(lx, ly, w, h, 7); else ctx.rect(lx, ly, w, h);
+  ctx.fillStyle = cssVar("--display-bg"); ctx.globalAlpha = 0.93; ctx.fill();
+  ctx.globalAlpha = 1; ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = cssVar("--display-fg"); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(text, lx + w / 2, ly + h / 2 + 0.5);
+  ctx.restore();
+}
+// 정적분 값, 접선 기울기 이름표
+function calcLabel(ctx, f) {
+  if (f.kind === "area") {
+    const mid = (f.area.a + f.area.b) / 2, ym = evalXY(f.ast, mid);
+    const py = Number.isFinite(ym) ? (toPy(ym) + toPy(0)) / 2 : toPy(0);
+    tag(ctx, `정적분 = ${coordText(f.area.value)}`, toPx(mid), py, f.color);
+  } else if (f.kind === "tangent") {
+    tag(ctx, `기울기 = ${coordText(f.tan.m)}`, toPx(f.tan.a), toPy(f.tan.fa) - 26, f.color);
+  }
+}
+// 그래프 위 한 점에서의 접선 기울기 (세로 접선이면 Infinity, 못 구하면 NaN)
+function slopeAt(f, pt) {
+  try {
+    if (isYK(f.kind)) return numDiff((t) => evalXY(f.ast, t), pt.x);
+    if (f.kind === "xfy") { const d = numDiff((t) => evalXY(f.ast, undefined, t), pt.y); return d === 0 ? Infinity : 1 / d; }
+    // x, y 가 섞인 식: 기울기 = −(x 로 미분) ÷ (y 로 미분)
+    const h = 1e-6 * Math.max(1, Math.abs(pt.x), Math.abs(pt.y));
+    const fx = (evalXY(f.ast, pt.x + h, pt.y) - evalXY(f.ast, pt.x - h, pt.y)) / (2 * h);
+    const fy = (evalXY(f.ast, pt.x, pt.y + h) - evalXY(f.ast, pt.x, pt.y - h)) / (2 * h);
+    if (!Number.isFinite(fx) || !Number.isFinite(fy)) return NaN;
+    if (Math.abs(fy) < 1e-12 * (1 + Math.abs(fx))) return Infinity;
+    const m = -fx / fy;
+    return Math.abs(m) < 1e-10 ? 0 : m;
+  } catch (e) { return NaN; }
+}
+// 선 스타일 맞추기
+function lineStyle(ctx, f, lw, dashed) {
+  ctx.strokeStyle = f.color; ctx.lineWidth = lw;
+  ctx.lineJoin = "round"; ctx.lineCap = dashed ? "butt" : "round";
+  ctx.setLineDash(dashed ? [8, 6] : []);
+}
+
+// y = f(x): 1픽셀마다 값을 구해 선으로 잇고, 점근선(tan x 등)에서는 끊기
+function curveY(ctx, f, lw, dashed) {
+  ctx.save(); lineStyle(ctx, f, lw, dashed); ctx.beginPath();
+  const LIM = 1e5;            // 너무 큰 픽셀 값은 잘라서 그림 (캔버스 오류 방지)
+  let prev = null;
+  for (let px = -1; px <= gW + 1; px += 1) {
+    const x = fromPx(px), y = evalXY(f.ast, x);
+    if (Number.isNaN(y)) { prev = null; continue; }
+    const py = toPy(y);
+    if (prev && Math.abs(py - prev.p) > gH / 2) {
+      // 갑자기 크게 뛰면 가운데 값을 확인: 두 점 사이에 있지 않으면 끊긴 곳(점근선)
+      const pm = toPy(evalXY(f.ast, (prev.v + x) / 2));
+      if (!Number.isFinite(pm) || pm < Math.min(prev.p, py) - 1 || pm > Math.max(prev.p, py) + 1) prev = null;
+    }
+    const c = Math.max(-LIM, Math.min(LIM, py));
+    if (prev) ctx.lineTo(px, c); else ctx.moveTo(px, c);
+    prev = { v: x, p: py };
+  }
+  ctx.stroke(); ctx.restore();
+}
+// x = g(y): 가로 대신 세로로 1픽셀마다
+function curveX(ctx, f, lw, dashed) {
+  ctx.save(); lineStyle(ctx, f, lw, dashed); ctx.beginPath();
+  const LIM = 1e5;
+  let prev = null;
+  for (let py = -1; py <= gH + 1; py += 1) {
+    const y = fromPy(py), x = evalXY(f.ast, undefined, y);
+    if (Number.isNaN(x)) { prev = null; continue; }
+    const px = toPx(x);
+    if (prev && Math.abs(px - prev.p) > gW / 2) {
+      const pm = toPx(evalXY(f.ast, undefined, (prev.v + y) / 2));
+      if (!Number.isFinite(pm) || pm < Math.min(prev.p, px) - 1 || pm > Math.max(prev.p, px) + 1) prev = null;
+    }
+    const c = Math.max(-LIM, Math.min(LIM, px));
+    if (prev) ctx.lineTo(c, py); else ctx.moveTo(c, py);
+    prev = { v: y, p: px };
+  }
+  ctx.stroke(); ctx.restore();
+}
+// y > f(x) 같은 부등식: 세로줄마다 곡선 위(또는 아래)를 색칠
+function fillY(ctx, f) {
+  const up = f.op === ">" || f.op === "≥";
+  ctx.save(); ctx.fillStyle = f.color; ctx.globalAlpha = 0.2; ctx.beginPath();
+  for (let px = 0; px < gW; px++) {
+    const y = evalXY(f.ast, fromPx(px + 0.5));
+    if (Number.isNaN(y)) continue;
+    const py = Math.max(0, Math.min(gH, toPy(y)));
+    if (up) ctx.rect(px, 0, 1.5, py); else ctx.rect(px, py, 1.5, gH - py);
+  }
+  ctx.fill(); ctx.restore();
+}
+// x > g(y) 같은 부등식: 가로줄마다 곡선 오른쪽(또는 왼쪽)을 색칠
+function fillX(ctx, f) {
+  const right = f.op === ">" || f.op === "≥";
+  ctx.save(); ctx.fillStyle = f.color; ctx.globalAlpha = 0.2; ctx.beginPath();
+  for (let py = 0; py < gH; py++) {
+    const x = evalXY(f.ast, undefined, fromPy(py + 0.5));
+    if (Number.isNaN(x)) continue;
+    const px = Math.max(0, Math.min(gW, toPx(x)));
+    if (right) ctx.rect(px, py, gW - px, 1.5); else ctx.rect(0, py, px, 1.5);
+  }
+  ctx.fill(); ctx.restore();
+}
+
+/* 원, 타원처럼 x, y 가 섞인 식 (F(x, y) = 왼쪽 − 오른쪽)
+   1) 화면을 작은 칸으로 나눠 꼭짓점마다 F 값을 계산
+   2) 부등식이면 조건을 만족하는 칸을 색칠
+   3) F 의 부호가 바뀌는 변에서 0 이 되는 점을 찾아 이어 경계선을 그림 (마칭 스퀘어 방법) */
+function implicitDraw(ctx, f, lw, dashed, ineq) {
+  let c = gesture && gesture.type !== "trace" ? 8 : 4;          // 화면을 움직이는 중에는 거칠게(빠르게)
+  while ((gW / c) * (gH / c) > 90000) c++;
+  const nx = Math.ceil(gW / c) + 1, ny = Math.ceil(gH / c) + 1;
+  const xs = new Float64Array(nx);
+  for (let i = 0; i < nx; i++) xs[i] = fromPx(i * c);
+  const v = new Float64Array(nx * ny);
+  for (let j = 0; j < ny; j++) {
+    const y = fromPy(j * c);
+    for (let i = 0; i < nx; i++) v[j * nx + i] = evalXY(f.ast, xs[i], y);
+  }
+  // 부등식: 조건을 만족하는 칸 색칠
+  if (ineq) {
+    const ok = f.op === ">" ? (q) => q > 0 : f.op === "≥" ? (q) => q >= 0 : f.op === "<" ? (q) => q < 0 : (q) => q <= 0;
+    ctx.save(); ctx.fillStyle = f.color; ctx.globalAlpha = 0.2; ctx.beginPath();
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const q = v[j * nx + i];
+      if (!Number.isNaN(q) && ok(q)) ctx.rect(i * c - c / 2, j * c - c / 2, c, c);
+    }
+    ctx.fill(); ctx.restore();
+  }
+  // 경계선: 변 위에서 F = 0 인 점 찾기 (점마다 번호를 붙여 이웃끼리 이어 긴 선으로 만듦)
+  const P = new Map(), adj = new Map();
+  const cross = (key, x1, y1, a, x2, y2, b) => {
+    if ((a > 0) === (b > 0)) return null;
+    // 변의 가운데 값이 양 끝보다 훨씬 크면 0 이 아니라 끊긴 곳(예: 1/x 의 x = 0) → 건너뜀
+    const m = evalXY(f.ast, fromPx((x1 + x2) / 2), fromPy((y1 + y2) / 2));
+    if (Number.isNaN(m) || Math.abs(m) > Math.abs(a) + Math.abs(b)) return null;
+    const t = a / (a - b);
+    if (!P.has(key)) P.set(key, { x: x1 + (x2 - x1) * t, y: y1 + (y2 - y1) * t });
+    return key;
+  };
+  const link = (p, q) => {
+    if (!adj.has(p)) adj.set(p, []);
+    if (!adj.has(q)) adj.set(q, []);
+    adj.get(p).push(q); adj.get(q).push(p);
+  };
+  for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
+    const a = v[j * nx + i], b = v[j * nx + i + 1], cc = v[(j + 1) * nx + i + 1], d = v[(j + 1) * nx + i];
+    if (Number.isNaN(a) || Number.isNaN(b) || Number.isNaN(cc) || Number.isNaN(d)) continue;
+    const s = (a > 0) + (b > 0) + (cc > 0) + (d > 0);
+    if (s === 0 || s === 4) continue;                          // 부호가 다 같으면 경계 없음
+    const x0 = i * c, y0 = j * c, H = (ii, jj) => (jj * nx + ii) * 2, V = (ii, jj) => (jj * nx + ii) * 2 + 1;
+    const pts = [
+      cross(H(i, j), x0, y0, a, x0 + c, y0, b),                // 위 변
+      cross(V(i + 1, j), x0 + c, y0, b, x0 + c, y0 + c, cc),   // 오른쪽 변
+      cross(H(i, j + 1), x0, y0 + c, d, x0 + c, y0 + c, cc),   // 아래 변
+      cross(V(i, j), x0, y0, a, x0, y0 + c, d),                // 왼쪽 변
+    ].filter((k) => k !== null);
+    if (pts.length >= 2) link(pts[0], pts[1]);
+    if (pts.length === 4) link(pts[2], pts[3]);
+  }
+  ctx.save(); lineStyle(ctx, f, lw, dashed); ctx.beginPath();
+  const seen = new Set();
+  const walk = (start) => {
+    let k = start;
+    ctx.moveTo(P.get(k).x, P.get(k).y); seen.add(k);
+    for (;;) {
+      const nb = adj.get(k).find((q) => !seen.has(q));
+      if (nb === undefined) break;
+      ctx.lineTo(P.get(nb).x, P.get(nb).y); seen.add(nb); k = nb;
+    }
+    if (k !== start && adj.get(k).includes(start)) ctx.closePath();   // 원처럼 닫힌 곡선
+  };
+  for (const [k, list] of adj) if (!seen.has(k) && list.length === 1) walk(k);   // 열린 곡선은 끝에서부터
+  for (const k of adj.keys()) if (!seen.has(k)) walk(k);                         // 나머지는 닫힌 곡선
+  ctx.stroke(); ctx.restore();
+}
+
+/* ---------- 좌표 추적 ---------- */
+// 깔끔한 수로 맞추기 (예: 1.03274 → 1.05)
+function snapV(v) { const s = niceStep(1 / G.ppu).step; return Math.round(v / s) * s; }
+// 화면의 점 p 에서 가장 가까운 '그래프 위의 점' (없으면 null)
+function pointOn(f, p) {
+  if (isYK(f.kind)) { const x = snapV(fromPx(p.x)), y = evalXY(f.ast, x); return Number.isFinite(y) ? { x, y } : null; }
+  if (f.kind === "xfy") { const y = snapV(fromPy(p.y)), x = evalXY(f.ast, undefined, y); return Number.isFinite(x) ? { x, y } : null; }
+  // x, y 가 섞인 식: 누른 점에서 곡선 쪽으로 조금씩 옮겨 가기 (뉴턴 방법)
+  let x = fromPx(p.x), y = fromPy(p.y);
+  const h = 0.5 / G.ppu;
+  const grad = (X, Y) => [
+    (evalXY(f.ast, X + h, Y) - evalXY(f.ast, X - h, Y)) / (2 * h),
+    (evalXY(f.ast, X, Y + h) - evalXY(f.ast, X, Y - h)) / (2 * h),
+  ];
+  for (let n = 0; n < 12; n++) {
+    const F = evalXY(f.ast, x, y);
+    const [gx, gy] = grad(x, y);
+    const g2 = gx * gx + gy * gy;
+    if (!Number.isFinite(F) || !(g2 > 0)) return null;
+    x -= (F * gx) / g2; y -= (F * gy) / g2;
+    if (Math.abs(F) < 1e-13) break;
+  }
+  const F = evalXY(f.ast, x, y), [gx, gy] = grad(x, y);
+  if (!Number.isFinite(F) || !Number.isFinite(gx) || !Number.isFinite(gy)) return null;
+  if ((Math.abs(F) / Math.hypot(gx, gy)) * G.ppu > 1) return null;   // 곡선에서 1픽셀 넘게 떨어져 있으면 실패
+  return { x, y };
+}
+// 누른 곳에서 가장 가까운 그래프 찾기
+function nearestFn(p, limit) {
+  let best = null;
+  G.fns.forEach((f) => {
+    if (!f.visible || !f.ast) return;
+    const pt = pointOn(f, p);
+    if (!pt) return;
+    const d = Math.hypot(toPx(pt.x) - p.x, toPy(pt.y) - p.y);
+    if (d <= limit && (!best || d < best.d)) best = { f, pt, d };
+  });
+  return best;
+}
+function traceAt(p, limit) {
+  const b = nearestFn(p, limit);
+  G.trace = b ? { id: b.f.id, x: b.pt.x, y: b.pt.y } : null;
+  scheduleDraw();
+}
+// 지금 추적 중인 점 (식을 고쳤을 수도 있으니 다시 계산)
+function tracePoint() {
+  const f = G.trace && G.fns.find((q) => q.id === G.trace.id);
+  if (!f || !f.visible || !f.ast) return null;
+  const pt = pointOn(f, { x: toPx(G.trace.x), y: toPy(G.trace.y) });
+  return pt ? { f, pt } : null;
+}
+function nearTracePoint(p) {
+  const t = tracePoint();
+  return !!t && Math.hypot(toPx(t.pt.x) - p.x, toPy(t.pt.y) - p.y) < 30;
+}
+// 좌표 추적 점 + 축까지 점선 + 아래 좌표 글자
+function drawTrace(ctx, bg, axX, axY) {
+  const info = $("gInfo");
+  const t = tracePoint();
+  if (!t) { info.classList.remove("show"); return; }
+  const { f, pt } = t, px = toPx(pt.x), py = toPy(pt.y);
+  let html = `<i style="background:${f.color}"></i>x = ${coordText(pt.x)},&nbsp; y = ${coordText(pt.y)}`;
+  if (G.tanOn) {                                    // 접선 켜기: 이 점의 접선과 기울기
+    const m = slopeAt(f, pt);
+    if (!Number.isNaN(m)) tangentLine(ctx, f.color, pt.x, pt.y, m);
+    html += `<br><span class="g-slope">기울기 = ${Number.isNaN(m) ? "구할 수 없음" : Number.isFinite(m) ? coordText(m) : "세로 (무한대)"}</span>`;
+  }
+  info.innerHTML = html;
+  info.classList.add("show");
+  ctx.save();
+  ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2; ctx.strokeStyle = f.color; ctx.globalAlpha = 0.7;
+  ctx.beginPath();
+  ctx.moveTo(px, py); ctx.lineTo(px, Math.min(Math.max(axY, 0), gH));
+  ctx.moveTo(px, py); ctx.lineTo(Math.min(Math.max(axX, 0), gW), py);
+  ctx.stroke();
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2);
+  ctx.fillStyle = f.color; ctx.fill();
+  ctx.lineWidth = 2.5; ctx.strokeStyle = bg; ctx.stroke();
+}
+
+/* ---------- 손가락·마우스 조작 ---------- */
+const ptrs = new Map();   // 화면에 닿아 있는 손가락(포인터)들
+let gesture = null;       // 지금 하고 있는 동작: pan(이동) / pinch(확대) / trace(점 따라가기)
+function gpos(e) { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+
+canvas.addEventListener("pointerdown", (e) => {
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* 일부 기기에서 실패해도 동작에는 문제없음 */ }
+  const p = gpos(e);
+  ptrs.set(e.pointerId, p);
+  if (ptrs.size === 1) {
+    gesture = nearTracePoint(p) ? { type: "trace" } : { type: "pan", sx: p.x, sy: p.y, cx: G.cx, cy: G.cy, moved: false };
+  } else if (ptrs.size === 2) {
+    const [a, b] = [...ptrs.values()];
+    const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    gesture = { type: "pinch", d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, ppu0: G.ppu, wx: fromPx(m.x), wy: fromPy(m.y) };
+  }
+});
+canvas.addEventListener("pointermove", (e) => {
+  const p = gpos(e);
+  if (!ptrs.has(e.pointerId)) {
+    // 마우스를 그냥 움직일 때: 곡선 근처면 좌표 보여 주기 (노트북)
+    if (e.pointerType === "mouse") traceAt(p, 30);
+    return;
+  }
+  ptrs.set(e.pointerId, p);
+  if (!gesture) return;
+  if (gesture.type === "pan") {
+    const dx = p.x - gesture.sx, dy = p.y - gesture.sy;
+    if (!gesture.moved && Math.hypot(dx, dy) < 6) return;     // 살짝 떨린 건 무시 (탭으로 봄)
+    gesture.moved = true;
+    canvas.style.cursor = "grabbing";
+    G.cx = gesture.cx - dx / G.ppu;
+    G.cy = gesture.cy + dy / G.ppu;
+    scheduleDraw();
+  } else if (gesture.type === "trace") {
+    const t = tracePoint(), pt = t && pointOn(t.f, p);      // 점을 그래프 따라 끌기
+    if (pt) { G.trace.x = pt.x; G.trace.y = pt.y; }
+    scheduleDraw();
+  } else if (gesture.type === "pinch" && ptrs.size >= 2) {
+    const [a, b] = [...ptrs.values()];
+    const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    G.ppu = clampPpu(gesture.ppu0 * Math.hypot(a.x - b.x, a.y - b.y) / gesture.d0);
+    G.cx = gesture.wx - (m.x - gW / 2) / G.ppu;               // 두 손가락 가운데 지점이 고정되도록
+    G.cy = gesture.wy + (m.y - gH / 2) / G.ppu;
+    scheduleDraw();
+  }
+});
+function endPointer(e) {
+  if (!ptrs.has(e.pointerId)) return;
+  const tap = gesture && gesture.type === "pan" && !gesture.moved && ptrs.size === 1 && e.type === "pointerup";
+  ptrs.delete(e.pointerId);
+  canvas.style.cursor = "";
+  if (tap) traceAt(gpos(e), 40);                              // 탭: 곡선 근처면 좌표 표시, 아니면 지우기
+  if (ptrs.size === 0) { gesture = null; scheduleDraw(); }   // 다 놓으면 다시 곱게 그리기
+  else if (ptrs.size === 1 && gesture && gesture.type === "pinch") {
+    const p = [...ptrs.values()][0];
+    gesture = { type: "pan", sx: p.x, sy: p.y, cx: G.cx, cy: G.cy, moved: true };
+  }
+}
+canvas.addEventListener("pointerup", endPointer);
+canvas.addEventListener("pointercancel", endPointer);
+canvas.addEventListener("wheel", (e) => {                        // 마우스 휠 확대/축소
+  e.preventDefault();
+  const p = gpos(e);
+  zoomAt(p.x, p.y, Math.exp(-e.deltaY * 0.0015));
+}, { passive: false });
+
+/* ---------- 그래프 도구 버튼 ---------- */
+document.querySelector(".g-tools").addEventListener("mousedown", (e) => e.preventDefault());
+document.querySelector(".g-tools").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-g]");
+  if (!b) return;
+  const g = b.dataset.g;
+  if (g === "in") zoomAt(gW / 2, gH / 2, 1.5);
+  if (g === "out") zoomAt(gW / 2, gH / 2, 1 / 1.5);
+  if (g === "home") homeView();
+  if (g === "pi") {
+    G.piTicks = !G.piTicks;
+    b.classList.toggle("on", G.piTicks);
+    if (G.piTicks && G.deg) toast("π 눈금은 RAD 일 때 쓸 수 있어요");
+    scheduleDraw();
+  }
+  if (g === "deg") toggleDeg();
+  if (g === "png") savePng();
+  if (g === "tan") {                                 // 접선 켜기/끄기
+    G.tanOn = !G.tanOn;
+    b.classList.toggle("on", G.tanOn);
+    toast(G.tanOn ? "그래프 위의 점을 누르면 접선과 기울기를 보여 줘요" : "접선 보기를 껐어요");
+    scheduleDraw();
+  }
+});
+
+/* ---------- 그림으로 저장 (식 목록을 왼쪽 위에 함께 적음) ---------- */
+// 식 구조 → 사람이 읽는 한 줄 글자 (그림 범례용)
+function plainText(row) {
+  const wrap = (r) => (r.length > 1 ? `(${plainText(r)})` : plainText(r));
+  return row.map((it) => {
+    if (!isNode(it)) return it.v === "-" ? "−" : it.v === "," ? ", " : isRel(it) ? ` ${it.v} ` : it.v;
+    const P = (k) => plainText(it[k]);
+    switch (it.t) {
+      case "frac": return `${wrap(it.num)}/${wrap(it.den)}`;
+      case "pow": { const e = plainText(it.exp); return /^-?\d+$/.test(e) ? toSup(e) : `^(${e})`; }
+      case "sqrt": return `√${wrap(it.body)}`;
+      case "root": return `${toSup(P("idx"))}√${wrap(it.body)}`;
+      case "par": return `(${P("body")})`;
+      case "func": {
+        if (it.name === "rand") return "난수";
+        const nm = { asin: "sin⁻¹", acos: "cos⁻¹", atan: "tan⁻¹", asinh: "sinh⁻¹", acosh: "cosh⁻¹", atanh: "tanh⁻¹",
+          mean: "평균", round: "반올림", floor: "내림", ceil: "올림" }[it.name] || it.name;
+        return `${nm}(${P("body")})`;
+      }
+      case "func2": return `${it.name}(${P("a")}, ${P("b")})`;
+      case "logb": return `log${wrap(it.base)}(${P("arg")})`;
+      case "ncr": return `${P("n")}C${P("r")}`;
+      case "npr": return `${P("n")}P${P("r")}`;
+      case "abs": return `|${P("body")}|`;
+      case "deriv": return `d/d${P("v")}(${P("body")})|${P("v")}=${P("at")}`;
+      case "deriv1": return `d/d${P("v")}(${P("body")})`;
+      case "integ": return `∫[${P("lo")}~${P("hi")}] ${P("body")} d${P("v")}`;
+      case "grad": return `∇(${P("body")})|(${P("pt")})`;
+    }
+    return "";
+  }).join("");
+}
+function savePng() {
+  draw();
+  const out = document.createElement("canvas");
+  out.width = canvas.width; out.height = canvas.height;
+  const c = out.getContext("2d");
+  c.drawImage(canvas, 0, 0);
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const items = G.fns.filter((f) => f.visible && f.ast);
+  if (items.length) {
+    c.font = "16px 'Times New Roman', serif";
+    const lines = items.map((f) => (f.hasRel ? plainText(f.tree) : `y = ${plainText(f.tree)}`));
+    const w = Math.min(gW - 20, Math.max(...lines.map((t) => c.measureText(t).width)) + 40);
+    c.fillStyle = cssVar("--panel-bg"); c.globalAlpha = 0.92;
+    c.fillRect(10, 10, w, lines.length * 22 + 10);
+    c.globalAlpha = 1;
+    c.textBaseline = "middle"; c.textAlign = "left";
+    lines.forEach((t, i) => {
+      const y = 25 + i * 22;
+      c.fillStyle = items[i].color; c.fillRect(18, y - 2, 16, 4);
+      c.fillStyle = cssVar("--panel-fg"); c.fillText(t, 40, y, w - 34);
+    });
+  }
+  out.toBlob((blob) => {
+    if (!blob) { toast("그림을 저장하지 못했어요"); return; }
+    const d = new Date(), p = (n) => String(n).padStart(2, "0");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `그래프_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }, "image/png");
+}
+
+/* =====================================================================
+   16. 문자(계수·상수) 값 입력
+   - 식에 x, y 말고 a, b, k, m 같은 문자를 쓰면 값 입력 칸이 생김
+   - 계산기: 값 칸 (예: ½mv² 에서 m, v)
+   - 그래프: 값 칸 + 슬라이더 + ▶(자동으로 움직이기)
+   ===================================================================== */
+// 문자 값 정하기 (계산할 때 찾아보는 표 PV 도 함께)
+function setParam(n, v) {
+  ensureParam(n);
+  PARAMS[n].value = v;
+  if (v === undefined) delete PV[n]; else PV[n] = v;
+}
+// 처음 보는 문자면 자리 만들기 (def: 기본값)
+function ensureParam(n, def) {
+  if (!PARAMS[n]) PARAMS[n] = { value: undefined, min: -10, max: 10, playing: false, dir: 1 };
+  if (def !== undefined && PARAMS[n].value === undefined) setParam(n, def);
+}
+// 값 글자 (소수 셋째 자리까지)
+const paramText = (v) => (v === undefined ? "" : String(Number(v.toFixed(3))));
+// 값 칸에 쓴 글자 → 숫자 (2π, 1/2, -3 같은 짧은 식도 됨, 다른 문자는 안 됨)
+function parseParamText(t) {
+  t = String(t).trim();
+  if (!t) return undefined;
+  try {
+    const v = new Parser(tokenize(t.replace(/\*/g, "×").replace(/\//g, "÷")), false).parseAll();
+    const r = evaluate(v, { deg: state.deg, ans: state.ans });
+    return Number.isFinite(r) ? r : NaN;
+  } catch (e) { return NaN; }
+}
+// 슬라이더 범위를 값이 들어가도록 넓히기
+function fitRange(n) {
+  const p = PARAMS[n], v = p.value;
+  if (v === undefined) return;
+  if (v < p.min) p.min = Math.floor(v - Math.max(1, Math.abs(v) * 0.5));
+  if (v > p.max) p.max = Math.ceil(v + Math.max(1, Math.abs(v) * 0.5));
+}
+
+/* ---------- 값 입력 칸 그리기 ----------
+   panel: 넣을 곳, names: 문자 목록, kind: "calc"(값 칸만) / "graph"(값 칸 + 슬라이더 + ▶) */
+function renderParamPanel(panel, names, kind) {
+  const key = names.join(",");
+  if (panel.dataset.key === key) return;              // 문자 목록이 같으면 다시 그리지 않음 (입력 중인 칸 유지)
+  panel.dataset.key = key;
+  panel.hidden = names.length === 0;
+  if (!names.length) { panel.innerHTML = ""; return; }
+  if (kind === "calc") {
+    panel.innerHTML = `<span class="p-title">문자 값</span>` + names.map((n) =>
+      `<label class="p-chip" data-n="${n}"><span class="p-name"><i>${n}</i> =</span>` +
+      `<input class="p-val" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="${paramText(PARAMS[n] && PARAMS[n].value)}" placeholder="값" aria-label="${n} 의 값"></label>`).join("");
+  } else {
+    panel.innerHTML = names.map((n) => {
+      const p = PARAMS[n];
+      return `<div class="p-row" data-n="${n}"><span class="p-name"><i>${n}</i> =</span>` +
+        `<input class="p-val" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="${paramText(p.value)}" aria-label="${n} 의 값">` +
+        `<input class="p-sl" type="range" min="${p.min}" max="${p.max}" step="${(p.max - p.min) / 400}" value="${p.value}" aria-label="${n} 슬라이더">` +
+        `<button class="p-play${p.playing ? " on" : ""}" type="button" title="${n} 값을 자동으로 움직이기" aria-label="${n} 자동으로 움직이기">${p.playing ? "❚❚" : "▶"}</button></div>`;
+    }).join("");
+  }
+}
+// 칸 하나의 표시를 지금 값에 맞추기 (슬라이더를 움직이거나 자동 재생할 때)
+function syncParamRow(panel, n, skipText) {
+  const row = panel.querySelector(`[data-n="${n}"]`);
+  if (!row) return;
+  const p = PARAMS[n];
+  const tx = row.querySelector(".p-val"), sl = row.querySelector(".p-sl");
+  if (!skipText) { tx.value = paramText(p.value); tx.classList.remove("bad"); }
+  if (sl) { sl.min = p.min; sl.max = p.max; sl.step = (p.max - p.min) / 400; sl.value = p.value; }
+}
+
+/* ---------- 계산기의 값 칸 ---------- */
+const cParamsEl = $("cParams");
+function updateCalcParams() {
+  let names = [];
+  try {
+    const tree = new Parser(tokenize(serialize(root)), true).parseAll();
+    names = [...freeVars(tree)].sort();
+  } catch (e) { names = (cParamsEl.dataset.key || "").split(",").filter(Boolean); }   // 입력 중이라 못 읽으면 그대로
+  names.forEach((n) => ensureParam(n));
+  renderParamPanel(cParamsEl, names, "calc");
+}
+cParamsEl.addEventListener("input", (e) => {
+  const chip = e.target.closest(".p-chip");
+  if (!chip) return;
+  const v = parseParamText(e.target.value);
+  e.target.classList.toggle("bad", Number.isNaN(v));
+  setParam(chip.dataset.n, Number.isNaN(v) ? undefined : v);
+  state.justEvaluated = false;                         // 값을 바꾸면 결과를 다시 미리 계산
+  refresh();
+});
+cParamsEl.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); doEvaluate(); } });
+
+/* ---------- 그래프의 값 칸 + 슬라이더 ---------- */
+const gParamsEl = $("gParams");
+function updateGraphParams() {
+  const names = new Set();
+  G.fns.forEach((f) => (f.params || []).forEach((n) => names.add(n)));
+  renderParamPanel(gParamsEl, [...names].sort(), "graph");
+}
+// 값이 바뀌면: 모든 식을 다시 계산(정적분 값, 접선 기울기 등)하고 다시 그리기
+function onGraphParamChange() {
+  G.fns.forEach((f) => { if (f !== G.fns[G.active]) compileFn(f); });
+  G.fns[G.active].tree = root; compileFn(G.fns[G.active]);
+  scheduleDraw();
+}
+gParamsEl.addEventListener("input", (e) => {
+  const row = e.target.closest(".p-row");
+  if (!row) return;
+  const n = row.dataset.n;
+  if (e.target.classList.contains("p-sl")) {            // 슬라이더
+    setParam(n, Number(e.target.value));
+    syncParamRow(gParamsEl, n);
+  } else {                                              // 값 칸에 직접 쓰기
+    const v = parseParamText(e.target.value);
+    const bad = v === undefined || Number.isNaN(v);
+    e.target.classList.toggle("bad", bad);
+    if (bad) return;
+    setParam(n, v); fitRange(n); syncParamRow(gParamsEl, n, true);
+  }
+  onGraphParamChange();
+});
+gParamsEl.addEventListener("mousedown", (e) => { if (e.target.closest(".p-play")) e.preventDefault(); });
+gParamsEl.addEventListener("click", (e) => {
+  const b = e.target.closest(".p-play");
+  if (!b) return;
+  const p = PARAMS[b.closest(".p-row").dataset.n];
+  p.playing = !p.playing;
+  b.classList.toggle("on", p.playing);
+  b.textContent = p.playing ? "❚❚" : "▶";
+  if (p.playing && !playRAF) playRAF = requestAnimationFrame(playLoop);
+});
+// ▶ 자동으로 움직이기: 범위 안에서 왔다 갔다 (한쪽 끝까지 약 4초)
+let playRAF = null;
+function playLoop() {
+  let any = false;
+  if (state.mode === "graph") {
+    Object.keys(PARAMS).forEach((n) => {
+      const p = PARAMS[n];
+      if (!p.playing || !gParamsEl.querySelector(`[data-n="${n}"]`)) return;
+      any = true;
+      let v = (p.value === undefined ? 0 : p.value) + p.dir * (p.max - p.min) / 240;
+      if (v >= p.max) { v = p.max; p.dir = -1; }
+      if (v <= p.min) { v = p.min; p.dir = 1; }
+      setParam(n, v);
+      syncParamRow(gParamsEl, n);
+    });
+  }
+  if (any) { onGraphParamChange(); playRAF = requestAnimationFrame(playLoop); }
+  else playRAF = null;
 }
 
 /* =====================================================================
@@ -1964,7 +3718,7 @@ refresh();
 if (!IS_TOUCH) editorEl.focus({ preventScroll: true });
 
 // 시험용으로 바깥에서 쓸 수 있게 (검증 스크립트용, 화면에는 영향 없음)
-window.__calc = { calculate, formatNumber, toFraction, state, serialize: () => serialize(root) };
+window.__calc = { calculate, formatNumber, toFraction, state, G, PV, setParam, serialize: () => serialize(root), setMode, redraw: () => draw() };
 </script>
 </body>
 </html>
